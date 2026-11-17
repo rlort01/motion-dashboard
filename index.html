@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Motion Dashboard</title>
+<link rel="icon" href="rings.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Source+Sans+3:wght@400;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+<div class="mp login" id="login" hidden>
+  <header class="mp-brand"><img src="rings.svg" alt="Motion"><div><p class="mp-brand-name">Motion</p><p class="mp-brand-slogan">We keep properties in motion</p></div></header>
+  <h1 class="mp-title" style="font-size:22px">Team dashboard</h1>
+  <p class="mp-note">Sign in with your @motionpmg.com, @motionpropertypreservation.com or @motionrealty.com email. We'll email you a sign-in link; no password needed.</p>
+  <form id="loginForm"><label class="mp-note" for="email">Work email</label><input id="email" type="email" autocomplete="email" required><button type="submit">Email me a link</button></form>
+  <form id="codeForm" style="margin-top:16px"><div id="codeRow" hidden><label class="mp-note" for="code">Or enter the code from the email</label><input id="code" inputmode="numeric" autocomplete="one-time-code"><button type="submit">Sign in</button></div></form>
+  <p class="mp-note" id="loginMsg" aria-live="polite"></p>
+</div>
+<div id="app" hidden>
+<div class="mp">
+  <header class="mp-brand" id="brand">
+    <img src="rings.svg" alt="Motion">
+    <div>
+      <p class="mp-brand-name">Motion</p>
+      <p class="mp-brand-slogan">We keep properties in motion</p>
+    </div>
+  <div class="mp-bar" id="company-bar">
+    <label>Company
+      <select class="dash-select" id="companySel" aria-label="Company">
+        <option value="pmg">Motion Property Management Group</option>
+        <option value="mpp">Motion Property Preservation</option>
+        <option value="mr">Motion Realty</option>
+        <option value="tv">TV board (all companies)</option>
+      </select>
+    </label>
+    <button class="mp-chip" id="signOut" type="button" style="align-self:flex-end">Sign out</button>
+  </div>
+  </header>
+  <div id="co-pmg">
+  <h1 class="mp-title" id="top">Motion PMG 2026 Scorecard</h1>
+  <p class="mp-sub" id="takeaway"><span data-draw="takeaway">—</span></p>
+
+  <div class="mp-bar" id="filters">
+    <label>Market
+      <select class="dash-select" data-draw="marketSel" aria-label="Market"></select>
+    </label>
+    <label>Month
+      <select class="dash-select" data-draw="monthSel" aria-label="Month" data-source="sc2026"></select>
+    </label>
+  </div>
+
+  <div class="mp-tabs" role="tablist" id="tabs">
+    <button class="mp-tab" role="tab" data-tab="scorecard" aria-selected="true">Scorecard</button>
+    <button class="mp-tab" role="tab" data-tab="workorders" aria-selected="false">Work orders: AppFolio + Jobber</button>
+    <button class="mp-tab" role="tab" data-tab="billing" aria-selected="false">Billing check</button>
+    <button class="mp-tab" role="tab" data-tab="utilreview" aria-selected="false">Utilities to review</button>
+    <button class="mp-tab" role="tab" data-tab="sources" aria-selected="false">Data sources &amp; checks</button>
+  </div>
+
+  <section id="scorecard" data-section>
+    <p class="mp-note">2026 results against the 2026 goals. Metrics marked "AppFolio (auto)" refresh every Monday at 7:53 AM; the rest come from the scorecard workbook the team updates. Click any metric to chart it by market.</p>
+    <div class="mp-grid">
+      <div class="mp-card" id="tile-eom_doors">
+        <h3>End-of-month doors and units</h3>
+        <div class="mp-big" data-source="scTable" data-field="value" data-where="ID=eom_doors" data-draw="tileVal" data-id="eom_doors">—</div>
+        <div class="mp-meta" data-source="scTable" data-field="value" data-where="ID=eom_units" data-draw="tileUnits" style="color: var(--color-fg)">—</div>
+        <div class="mp-meta" data-draw="tileMeta" data-id="eom_doors">—</div>
+      </div>
+      <div class="mp-card" id="tile-net">
+        <h3>Net door growth</h3>
+        <div class="mp-big" data-source="scTable" data-draw="netDoors">—</div>
+        <div class="mp-meta">Doors in minus doors out this month</div>
+      </div>
+      <div class="mp-card" id="tile-r47">
+        <h3>Doors closed</h3>
+        <div class="mp-big" data-source="scTable" data-field="value" data-where="ID=r47" data-draw="tileVal" data-id="r47">—</div>
+        <div class="mp-meta" data-draw="tileMeta" data-id="r47">—</div>
+      </div>
+      <div class="mp-card" id="tile-r18">
+        <h3>Tenant delinquency</h3>
+        <div class="mp-big" data-source="scTable" data-field="value" data-where="ID=r18" data-draw="tileVal" data-id="r18">—</div>
+        <div class="mp-meta" data-draw="tileMeta" data-id="r18">—</div>
+      </div>
+      <div class="mp-card" id="tile-r22">
+        <h3>Vacancy rate</h3>
+        <div class="mp-big" data-source="scTable" data-field="value" data-where="ID=r22" data-draw="tileVal" data-id="r22">—</div>
+        <div class="mp-meta" data-draw="tileMeta" data-id="r22">—</div>
+      </div>
+      <div class="mp-card" id="tile-r14">
+        <h3>Lease renewals</h3>
+        <div class="mp-big" data-source="scTable" data-field="value" data-where="ID=r14" data-draw="tileVal" data-id="r14">—</div>
+        <div class="mp-meta" data-draw="tileMeta" data-id="r14">—</div>
+      </div>
+      <div class="mp-card" id="tile-r30">
+        <h3>Revenue per door per month</h3>
+        <div class="mp-big" data-source="scTable" data-field="value" data-where="ID=r30" data-draw="tileVal" data-id="r30">—</div>
+        <div class="mp-meta" data-draw="tileMeta" data-id="r30">—</div>
+      </div>
+      <div class="mp-card" id="tile-r32">
+        <h3>Labor cost ratio</h3>
+        <div class="mp-big" data-source="scTable" data-field="value" data-where="ID=r32" data-draw="tileVal" data-id="r32">—</div>
+        <div class="mp-meta" data-draw="tileMeta" data-id="r32">—</div>
+      </div>
+    </div>
+
+    <div class="mp-chart" id="sc-chart-card" style="margin-top: var(--cds-gap-md)">
+      <h3 data-draw="chartTitle">—</h3>
+      <div class="mp-plot mp-plot-lg" data-source="scChart" data-draw="scChartPlot"></div>
+    </div>
+
+    <h2 class="mp-h2" id="sec-tenant-and-owner-communications">Tenant and owner communications</h2>
+    <div class="mp-wrap">
+      <table class="mp-table" data-source="scTable" data-row-key="ID">
+        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
+        <tbody data-draw="scSection" data-section="Tenant/Owner Comms"></tbody>
+      </table>
+    </div>
+    <h2 class="mp-h2" id="sec-leasing">Leasing</h2>
+    <div class="mp-wrap">
+      <table class="mp-table" data-source="scTable" data-row-key="ID">
+        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
+        <tbody data-draw="scSection" data-section="Leasing Services"></tbody>
+      </table>
+    </div>
+    <h2 class="mp-h2" id="sec-finance">Finance</h2>
+    <div class="mp-wrap">
+      <table class="mp-table" data-source="scTable" data-row-key="ID">
+        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
+        <tbody data-draw="scSection" data-section="Finance"></tbody>
+      </table>
+    </div>
+    <h2 class="mp-h2" id="sec-inspection-and-maintenance">Inspection and maintenance</h2>
+    <div class="mp-wrap">
+      <table class="mp-table" data-source="scTable" data-row-key="ID">
+        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
+        <tbody data-draw="scSection" data-section="Inspection &amp; Maintenance Services"></tbody>
+      </table>
+    </div>
+    <h2 class="mp-h2" id="sec-rehab">Rehab</h2>
+    <div class="mp-wrap">
+      <table class="mp-table" data-source="scTable" data-row-key="ID">
+        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
+        <tbody data-draw="scSection" data-section="Rehab Services"></tbody>
+      </table>
+    </div>
+    <h2 class="mp-h2" id="sec-sales-and-marketing">Sales and marketing</h2>
+    <div class="mp-wrap">
+      <table class="mp-table" data-source="scTable" data-row-key="ID">
+        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
+        <tbody data-draw="scSection" data-section="Sales and Marketing"></tbody>
+      </table>
+    </div>
+    <h2 class="mp-h2" id="sec-door-counts">Door counts</h2>
+    <div class="mp-wrap">
+      <table class="mp-table" data-source="scTable" data-row-key="ID">
+        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
+        <tbody data-draw="scSection" data-section="Portfolio"></tbody>
+      </table>
+    </div>
+
+    <h2 class="mp-h2" id="xcheck">Entered vs AppFolio</h2>
+    <p class="mp-note">The metrics AppFolio now fills in automatically, next to what the team entered on the scorecard workbook for the same market and month. Highlighted rows differ enough to check how each is measured.</p>
+    <div class="mp-wrap">
+      <table class="mp-table" data-source="xcheck" data-row-key="metric">
+        <thead><tr><th data-field="metric">Metric</th><th class="mp-num" data-field="entered">Entered</th><th class="mp-num" data-field="appfolio">AppFolio</th><th data-field="note">How AppFolio measures it</th></tr></thead>
+        <tbody data-draw="xcheckRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="workorders" data-section hidden>
+    <p class="mp-note">Open AppFolio work orders next to the Jobber job created for them. A job is linked when its title carries the AppFolio work order number, or failing that when the street address matches.</p>
+    <div class="mp-grid" style="margin-bottom: var(--cds-gap-md)">
+      <div class="mp-card"><h3>Open AppFolio work orders</h3><div class="mp-big" data-source="boardSum" data-field="open" data-row="0" data-draw="bOpen">—</div><div class="mp-meta">Not completed or canceled</div></div>
+      <div class="mp-card"><h3>Linked to a Jobber job</h3><div class="mp-big" data-source="boardSum" data-field="linked" data-row="0" data-draw="bLinked">—</div><div class="mp-meta">Active Jobber jobs</div></div>
+      <div class="mp-card"><h3>Open 30+ days with no Jobber job</h3><div class="mp-big" data-source="boardSum" data-field="stale" data-row="0" data-draw="bStale">—</div><div class="mp-meta">Mostly mid-lease inspections still "Scheduled"</div></div>
+      <div class="mp-card"><h3>Jobber jobs late or needing action</h3><div class="mp-big" data-source="boardSum" data-field="jobberAttn" data-row="0" data-draw="bAttn">—</div><div class="mp-meta">Jobber status late or action required</div></div>
+    </div>
+    <div class="mp-chips" id="wo-view" role="group" aria-label="Show">
+      <button class="mp-chip" data-woview="all" aria-pressed="true">All open</button>
+      <button class="mp-chip" data-woview="linked" aria-pressed="false">In Jobber</button>
+      <button class="mp-chip" data-woview="nojob" aria-pressed="false">Not in Jobber</button>
+      <button class="mp-chip" data-woview="old" aria-pressed="false">Open 30+ days</button>
+    </div>
+    <div class="mp-wrap mp-scroll" id="board">
+      <table class="mp-table" data-source="board" data-row-key="wo">
+        <thead><tr>
+          <th data-field="wo">AppFolio WO</th>
+          <th data-field="group">Group</th>
+          <th data-field="address">Property</th>
+          <th data-field="desc">Request</th>
+          <th data-field="status">AppFolio status</th>
+          <th class="mp-num" data-field="days">Days open</th>
+          <th data-field="vendor">Vendor</th>
+          <th data-field="jobberJob">Jobber job</th>
+          <th data-field="jobberStatus">Jobber status</th>
+          <th data-field="jobberDate">Jobber date</th>
+        </tr></thead>
+        <tbody data-draw="boardRows"></tbody>
+      </table>
+    </div>
+    <h2 class="mp-h2" id="jobber-only">Jobber jobs with no open AppFolio work order</h2>
+    <p class="mp-note">The AppFolio work order may already be closed, or the job was never entered in AppFolio.</p>
+    <div class="mp-wrap" id="jobber-only-table">
+      <table class="mp-table" data-source="jobberOnly" data-row-key="job">
+        <thead><tr>
+          <th data-field="job">Jobber job</th>
+          <th data-field="title">Title</th>
+          <th data-field="address">Property</th>
+          <th data-field="status">Status</th>
+          <th data-field="start">Date</th>
+        </tr></thead>
+        <tbody data-draw="jobberOnlyRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="billing" data-section hidden>
+    <p class="mp-note">Two checks: are completed AppFolio work orders billed back to owners or tenants, and have Motion Property Preservation's Jobber invoices been sent and paid.</p>
+    <h2 class="mp-h2" id="bill-ftv">Fort Valley: balances owed</h2>
+    <p class="mp-note">Every Fort Valley tenant with a balance in AppFolio. Financial aid should all have arrived by now, so these count as real delinquency. Refreshed every Monday.</p>
+    <div class="mp-grid">
+      <div class="mp-card"><h3>Total owed</h3><div class="mp-big" data-source="ftvSum" data-draw="fTotal">—</div><div class="mp-meta" data-draw="fTotalN">—</div></div>
+      <div class="mp-card"><h3>Current tenants, never paid</h3><div class="mp-big" data-source="ftvSum" data-draw="fNever">—</div><div class="mp-meta" data-draw="fNeverN">—</div></div>
+      <div class="mp-card"><h3>In eviction</h3><div class="mp-big" data-source="ftvSum" data-draw="fEvict">—</div><div class="mp-meta" data-draw="fEvictN">—</div></div>
+      <div class="mp-card"><h3>Past tenants</h3><div class="mp-big" data-source="ftvSum" data-draw="fPast">—</div><div class="mp-meta" data-draw="fPastN">—</div></div>
+    </div>
+    <div class="mp-chips" id="ftv-view" role="group" aria-label="Fort Valley balances" style="margin-top: var(--cds-gap-md)">
+      <button class="mp-chip" data-fview="all" aria-pressed="true">All</button>
+      <button class="mp-chip" data-fview="never" aria-pressed="false">Never paid</button>
+      <button class="mp-chip" data-fview="camellia" aria-pressed="false">609 S Camellia</button>
+      <button class="mp-chip" data-fview="evict" aria-pressed="false">Evictions</button>
+      <button class="mp-chip" data-fview="past" aria-pressed="false">Past tenants</button>
+    </div>
+    <div class="mp-wrap mp-scroll" id="ftv-table">
+      <table class="mp-table" data-source="ftv_balances" data-row-key="TENANT">
+        <thead><tr><th>Property</th><th>Unit</th><th>Tenant</th><th>Status</th><th class="mp-num">Balance</th><th class="mp-num">0-30</th><th class="mp-num">31-60</th><th class="mp-num">61-90</th><th class="mp-num">90+</th><th>Last payment</th><th>Latest note</th></tr></thead>
+        <tbody data-draw="ftvRows"></tbody>
+      </table>
+    </div>
+
+    <h2 class="mp-h2" id="bill-jobber">Jobber invoices (Motion Property Preservation)</h2>
+    <div class="mp-grid">
+      <div class="mp-card"><h3>Drafts, not sent</h3><div class="mp-big" data-source="billSum" data-field="draftN" data-row="0" data-draw="draftN">—</div><div class="mp-meta"><span data-source="billSum" data-field="draftAmt" data-row="0" data-draw="draftAmt">—</span> not yet sent</div></div>
+      <div class="mp-card"><h3>Past due</h3><div class="mp-big" data-source="billSum" data-field="pastDueN" data-row="0" data-draw="pastDueN">—</div><div class="mp-meta"><span data-source="billSum" data-field="pastDueAmt" data-row="0" data-draw="pastDueAmt">—</span> overdue</div></div>
+      <div class="mp-card"><h3>Sent, awaiting payment</h3><div class="mp-big" data-source="billSum" data-field="openN" data-row="0" data-draw="openN">—</div><div class="mp-meta"><span data-source="billSum" data-field="openAmt" data-row="0" data-draw="openAmt">—</span> outstanding, past due included</div></div>
+    </div>
+    <div class="mp-chips" id="inv-view" role="group" aria-label="Invoices" style="margin-top: var(--cds-gap-md)">
+      <button class="mp-chip" data-invview="attention" aria-pressed="true">Drafts and past due</button>
+      <button class="mp-chip" data-invview="all" aria-pressed="false">All unpaid</button>
+    </div>
+    <div class="mp-wrap mp-scroll" id="inv-table">
+      <table class="mp-table" data-source="invoices" data-row-key="inv">
+        <thead><tr>
+          <th data-field="inv">Invoice</th>
+          <th data-field="subject">Subject</th>
+          <th data-field="wo">AppFolio WO</th>
+          <th data-field="status">Status</th>
+          <th data-field="due">Due</th>
+          <th class="mp-num" data-field="balance">Balance</th>
+          <th data-field="inAppfolio">AppFolio bill</th>
+        </tr></thead>
+        <tbody data-draw="invRows"></tbody>
+      </table>
+    </div>
+
+    <h2 class="mp-h2" id="bill-appfolio">AppFolio: completed work orders not billed back (last 90 days)</h2>
+    <div class="mp-grid">
+      <div class="mp-card"><h3>No vendor bill entered</h3><div class="mp-big" data-source="gapSum" data-field="noBill" data-row="0" data-draw="noBill">—</div><div class="mp-meta">So nothing reaches the owner's ledger. <span data-source="gapSum" data-field="noBillJobber" data-row="0" data-draw="noBillJobber">—</span> of them have a Jobber invoice.</div></div>
+      <div class="mp-card"><h3>Bill entered, no owner/tenant invoice linked</h3><div class="mp-big" data-source="gapSum" data-field="noCharge" data-row="0" data-draw="noCharge">—</div><div class="mp-meta"><span data-source="gapSum" data-field="noChargeAmt" data-row="0" data-draw="noChargeAmt">—</span> in work-order amounts</div></div>
+      <div class="mp-card"><h3>MPP bills posted to the office</h3><div class="mp-big" data-source="officeSum" data-field="n" data-row="0" data-draw="officeN">—</div><div class="mp-meta"><span data-source="officeSum" data-field="amt" data-row="0" data-draw="officeAmt">—</span> on 4495 Atlanta Hwy instead of the property</div></div>
+    </div>
+    <p class="mp-note" style="margin-top: var(--cds-gap-sm)">A vendor bill entered on a property is normally paid from that owner's funds. "No owner/tenant invoice linked" only matters where the cost should be charged to a tenant or marked up, so check those case by case. The "no vendor bill" rows are the real gaps.</p>
+    <div class="mp-chips" id="gap-view" role="group" aria-label="Gaps">
+      <button class="mp-chip" data-gapview="V" aria-pressed="true">No vendor bill</button>
+      <button class="mp-chip" data-gapview="C" aria-pressed="false">No owner/tenant invoice</button>
+    </div>
+    <div class="mp-wrap mp-scroll" id="gap-table">
+      <table class="mp-table" data-source="gapRows" data-row-key="WO">
+        <thead><tr>
+          <th data-field="WO">AppFolio WO</th>
+          <th data-field="GROUP">Group</th>
+          <th data-field="ADDRESS">Property</th>
+          <th data-field="COMPLETED">Completed</th>
+          <th data-field="VENDOR">Vendor</th>
+          <th class="mp-num" data-field="WO_AMOUNT">WO amount</th>
+          <th data-field="jobberInv">Jobber invoice</th>
+        </tr></thead>
+        <tbody data-draw="gapTable"></tbody>
+      </table>
+    </div>
+
+    <h2 class="mp-h2" id="bill-ramp">Ramp purchases vs AppFolio bill-backs (2026)</h2>
+    <p class="mp-note">Utilities Motion PMG paid on Ramp (GL "Owner Utilities Paid") and materials bought on Ramp (GL "Supplies &amp; materials" and "Repairs &amp; maintenance"), checked against what was billed to the property in AppFolio. The property is read from the Ramp memo, because the QuickBooks Customer/Job field in Ramp is blank on every one of these purchases. All markets; Ramp's location field isn't reliable enough to split by market.</p>
+    <div class="mp-grid">
+      <div class="mp-card"><h3>Utilities paid on Ramp</h3><div class="mp-big" data-source="rampSum" data-field="utilTotal" data-row="0" data-draw="rUtilTotal">—</div><div class="mp-meta" data-draw="rUtilTotalN">—</div></div>
+      <div class="mp-card"><h3>Utilities not billed back</h3><div class="mp-big" data-source="rampSum" data-field="utilGap" data-row="0" data-draw="rUtilGap">—</div><div class="mp-meta" data-draw="rUtilGapN">—</div></div>
+      <div class="mp-card"><h3>Utility payments with no property</h3><div class="mp-big" data-source="rampSum" data-field="utilNoProp" data-row="0" data-draw="rUtilNoProp">—</div><div class="mp-meta" data-draw="rUtilNoPropN">—</div></div>
+      <div class="mp-card"><h3>Materials bought on Ramp</h3><div class="mp-big" data-source="rampSum" data-field="matTotal" data-row="0" data-draw="rMatTotal">—</div><div class="mp-meta" data-draw="rMatNoProp">—</div></div>
+      <div class="mp-card"><h3>Materials with no property bill in 60 days</h3><div class="mp-big" data-source="rampSum" data-field="matNoBill" data-row="0" data-draw="rMatNoBill">—</div><div class="mp-meta" data-draw="rMatNoBillN">—</div></div>
+    </div>
+    <div class="mp-chips" id="ramp-view" role="group" aria-label="Ramp check" style="margin-top: var(--cds-gap-md)">
+      <button class="mp-chip" data-rview="gap" aria-pressed="true">Utilities: under-billed properties</button>
+      <button class="mp-chip" data-rview="unbilled" aria-pressed="false">Utilities: unbilled payments</button>
+      <button class="mp-chip" data-rview="noprop" aria-pressed="false">Utilities: no property named</button>
+      <button class="mp-chip" data-rview="matnoprop" aria-pressed="false">Materials: no property named</button>
+      <button class="mp-chip" data-rview="matnobill" aria-pressed="false">Materials: no property bill</button>
+    </div>
+    <div class="mp-wrap mp-scroll" id="ramp-table">
+      <table class="mp-table" data-source="ramp_util_props" data-row-key="PROPKEY">
+        <thead><tr data-draw="rampHead" data-source="ramp_mat"></tr></thead>
+        <tbody data-draw="rampRows" data-source="ramp_util"></tbody>
+      </table>
+    </div>
+    <p class="mp-note" style="margin-top: var(--cds-gap-sm)">Matching: a Ramp payment counts as billed back when AppFolio has a bill or charge on the same property for the same amount within 120 days; otherwise the property's 2026 totals are compared (paid on Ramp vs utility reimbursements billed, excluding the $30 utility management fee). Materials are bundled into Motion's repair invoices, so they can only be checked at property level: a Motion PMG or MPP maintenance, repair, turn or appliance bill on that property within 60 days of the purchase.</p>
+
+    <h2 class="mp-h2" id="bill-office">Unpaid MPP bills in AppFolio</h2>
+    <div class="mp-wrap" id="office-table">
+      <table class="mp-table" data-source="officeBills" data-row-key="REF">
+        <thead><tr>
+          <th data-field="REF">Ref (Jobber invoice)</th>
+          <th data-field="PROPERTY">Posted to</th>
+          <th data-field="jobberSubject">Jobber invoice is for</th>
+          <th class="mp-num" data-field="UNPAID">Unpaid</th>
+          <th data-field="DUE">Due</th>
+        </tr></thead>
+        <tbody data-draw="officeRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="utilreview" data-section hidden>
+    <p class="mp-note">Every 2026 utility payment Motion made on Ramp that still needs a reimbursement check, worst first. A payment drops off this list once AppFolio has a bill or corporate charge on the same property for the same amount. Refreshed every Monday.</p>
+    <div class="mp-grid">
+      <div class="mp-card"><h3>High: property not billed back</h3><div class="mp-big" data-source="utilSum" data-draw="uHigh">—</div><div class="mp-meta" data-draw="uHighN">—</div></div>
+      <div class="mp-card"><h3>Medium: no property on the payment</h3><div class="mp-big" data-source="utilSum" data-draw="uMed">—</div><div class="mp-meta" data-draw="uMedN">—</div></div>
+      <div class="mp-card"><h3>Check: no exact bill-back</h3><div class="mp-big" data-source="utilSum" data-draw="uCheck">—</div><div class="mp-meta" data-draw="uCheckN">—</div></div>
+      <div class="mp-card"><h3>Coding: not a utility</h3><div class="mp-big" data-source="utilSum" data-draw="uCoding">—</div><div class="mp-meta" data-draw="uCodingN">—</div></div>
+    </div>
+    <div class="mp-chips" id="util-view" role="group" aria-label="Priority" style="margin-top: var(--cds-gap-md)">
+      <button class="mp-chip" data-uview="all" aria-pressed="true">All to review</button>
+      <button class="mp-chip" data-uview="1" aria-pressed="false">High</button>
+      <button class="mp-chip" data-uview="2" aria-pressed="false">Medium</button>
+      <button class="mp-chip" data-uview="3" aria-pressed="false">Check</button>
+      <button class="mp-chip" data-uview="5" aria-pressed="false">Coding</button>
+      <button class="mp-chip" data-uview="4" aria-pressed="false">Payment fees</button>
+    </div>
+    <div class="mp-wrap mp-scroll" id="util-table">
+      <table class="mp-table" data-source="util_review" data-row-key="DATE">
+        <thead><tr><th>Priority</th><th>Date</th><th>Utility</th><th>Property</th><th>Market</th><th class="mp-num">Amount</th><th>Ramp memo</th><th>Paid by</th><th>Why it's here</th></tr></thead>
+        <tbody data-draw="utilRows"></tbody>
+      </table>
+    </div>
+    <h2 class="mp-h2" id="util-qb">QuickBooks: owner utilities paid vs reimbursed</h2>
+    <p class="mp-note">Company-wide totals from the QuickBooks P&amp;L. Reimbursements only started being booked to "Owner Utilities Reimbursement" in August, so earlier months show "not booked".</p>
+    <div class="mp-wrap">
+      <table class="mp-table" data-source="qb_lines" data-row-key="MONTH">
+        <thead><tr><th>Month</th><th class="mp-num">Owner utilities paid</th><th class="mp-num">Reimbursed</th><th class="mp-num">Not yet reimbursed</th></tr></thead>
+        <tbody data-draw="qbUtilRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="sources" data-section hidden>
+    <h2 class="mp-h2" id="src-schedule">How the dashboard stays current</h2>
+    <p class="mp-note">A scheduled task refreshes the dashboard every Monday at 7:53 AM Eastern, ahead of the 10 AM meeting. It re-pulls AppFolio, Ramp, QuickBooks, LeadSimple and the scorecard workbook. Jobber jobs and invoices refresh every hour on weekdays. <span data-draw="lastUpdated"></span></p>
+    <div class="mp-wrap">
+      <table class="mp-table">
+        <thead><tr><th>Metrics</th><th>Source</th><th>How it updates</th><th>What to do</th></tr></thead>
+        <tbody>
+          <tr><td>End-of-month doors and units, doors in and out, tenant delinquency, vacancy, critical and normal work-order resolve time, renter's insurance compliance, days on market</td><td>AppFolio</td><td>Automatic, every Monday</td><td>Nothing. Entered values still show under "Entered vs AppFolio" for comparison.</td></tr>
+          <tr><td>Work-order board, Jobber job status, Jobber invoices (draft, sent, past due), MPP jobs</td><td>Jobber</td><td>Automatic, hourly on weekdays</td><td>Nothing.</td></tr>
+          <tr><td>Revenue per door, by market</td><td>AppFolio: everything paid to Motion Property Management Group from property ledgers, less clearing, accounts-payable and owner-distribution transfers</td><td>Automatic, every Monday</td><td>Nothing.</td></tr>
+          <tr><td>Labor cost ratio and COGS per door, all markets combined</td><td>QuickBooks: contract labor ÷ total income; cost of goods sold ÷ AppFolio doors</td><td>Automatic, every Monday. Markets stay entered: the QuickBooks connection gives company totals only</td><td>For market-level numbers, give the connection access to bills and transactions (reconnect QuickBooks and approve all requested permissions).</td></tr>
+          <tr><td>Rehab profitability</td><td>Team tracking</td><td>Entered in the workbook</td><td>Keep entering monthly.</td></tr>
+          <tr><td>Reviews (new Google reviews)</td><td>Google Business Profile via Windsor.ai: Atlanta/main listing counts as Georgia, Chattanooga as Tennessee, Raleigh as North Carolina</td><td>Automatic for the current month, every Monday</td><td>Windsor.ai is on a trial that only reads the last 30 days; keep the plan active or this stops.</td></tr>
+          <tr><td>Close percentage, by market</td><td>LeadSimple: signed contracts ÷ (signed + lost) in the Atlanta, Chattanooga and NC pipelines, all time</td><td>Automatic, every Monday</td><td>Nothing. LeadSimple gives no close date, so this is a running all-time rate rather than this month's.</td></tr>
+          <tr><td>Doors closed, by market</td><td>LeadSimple: growth in signed contracts between Monday snapshots (first snapshot taken Nov 17, 2026)</td><td>Automatic from December; entered in the workbook until then</td><td>Nothing once December's snapshots are in. Counts contracts, not doors, so a multi-door owner counts once.</td></tr>
+          <tr><td>Sales goal, Active 30/60/90</td><td>LeadSimple open leads have no expected close date</td><td>Entered in the workbook</td><td>Keep entering, or replace with 90-day pipeline coverage (see below).</td></tr>
+          <tr><td>Social media posts and engagement, search ranking, local SEO clicks</td><td>Facebook pages and Search Console via Windsor.ai (Search Console only has motionrealty.co)</td><td>Entered in the workbook</td><td>Add motionpmg.com in Search Console, or drop these (see below).</td></tr>
+          <tr><td>End-of-month units, by market</td><td>AppFolio: units on active properties at month end</td><td>Automatic, every Monday</td><td>Nothing. Shown with the door count.</td></tr>
+          <tr><td>Utility and materials bill-back check</td><td>Ramp (utility payments and materials purchases) against AppFolio bills to the property</td><td>Automatic, every Monday</td><td>In Ramp, require the QuickBooks Customer/Job (property) field on Owner Utilities Paid and Supplies &amp; materials purchases; until then the property is read from the memo.</td></tr>
+          <tr><td>Lease renewals</td><td>AppFolio tracks renewals, but the connector's lease records don't hold every 2026 expiration (it found 14; its renewal list shows only renewed leases, so 100% every month)</td><td>Entered in the workbook</td><td>Schedule AppFolio's Lease Expiration / Renewal Summary report to email or OneDrive monthly; the Monday refresh can then read it.</td></tr>
+          <tr><td>Tenant and prospect response time</td><td>AppFolio keeps when a request was created and its latest assignment, not the first reply, and has no first-contact time on guest cards</td><td>Entered in the workbook</td><td>Use AppFolio's Work Order or Guest Card response reports if your plan has them, or keep entering.</td></tr>
+          <tr><td>Owner debt, credits issued, contract to market, contract to tenant portal, leads to showings, showings to applications, application processing time, mid-lease and Tenant Turner compliance, maintenance cost per door, rehab completion, win rate and cost</td><td>AppFolio reports the connector couldn't return reliably, or team tracking</td><td>Entered in the workbook</td><td>Keep entering monthly in the workbook.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="mp-h2" id="src-manual">Updating the entered metrics</h2>
+    <ol class="mp-note">
+      <li>Keep entering monthly actuals in "Motion PMG Scorecard - 2026.xlsx", same layout as today.</li>
+      <li>Save it to OneDrive at Company Documents &gt; Operations &gt; Scorecard (next to the 2027 template). The Monday refresh reads the most recently saved copy with that name.</li>
+      <li>Type values as plain numbers or percentages; "-" and blanks count as not entered. The refresh reads what the cells display, so show percentages with two decimals.</li>
+      <li>Need it sooner than Monday? Ask Claude to refresh the dashboard.</li>
+    </ol>
+
+    <h2 class="mp-h2" id="src-checks">Checks between Jobber and AppFolio</h2>
+    <div class="mp-wrap">
+      <table class="mp-table">
+        <thead><tr><th>Check</th><th>How it's matched</th><th>Where to see it</th></tr></thead>
+        <tbody>
+          <tr><td>Each open AppFolio work order has a Jobber job</td><td>AppFolio WO number in the Jobber job title (e.g. "Work Order #1942-1"), or failing that the street address</td><td>Work orders tab</td></tr>
+          <tr><td>Work orders open 30+ days with no Jobber job</td><td>Same match, plus days open in AppFolio</td><td>Work orders tab, "Open 30+ days"</td></tr>
+          <tr><td>Jobber jobs with no open AppFolio work order</td><td>Jobber job whose WO number and address match nothing open in AppFolio</td><td>Work orders tab, bottom</td></tr>
+          <tr><td>Jobber jobs late or needing action</td><td>Jobber status</td><td>Work orders tab</td></tr>
+          <tr><td>Invoices not sent</td><td>Jobber invoices in draft</td><td>Billing check tab</td></tr>
+          <tr><td>Invoices not paid</td><td>Jobber invoices awaiting payment and past due</td><td>Billing check tab</td></tr>
+          <tr><td>Expense not billed back to the owner</td><td>Completed AppFolio work order with no vendor bill, flagged when a Jobber invoice exists for the same WO number</td><td>Billing check tab</td></tr>
+          <tr><td>Bill entered but no owner or tenant invoice</td><td>AppFolio vendor bill with no linked chargeback invoice</td><td>Billing check tab</td></tr>
+          <tr><td>MPP bill posted to the wrong property</td><td>AppFolio bill reference = Jobber invoice number; flagged when posted to the 4495 Atlanta Hwy office</td><td>Billing check tab</td></tr>
+          <tr><td>Scorecard entries agree with the systems</td><td>Entered value vs AppFolio value, same market and month</td><td>Scorecard tab, "Entered vs AppFolio"</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="mp-h2" id="src-trim">Metrics worth dropping or fixing</h2>
+    <p class="mp-note">These add entry work without telling the meeting much. Most match changes already made in the 2027 template.</p>
+    <div class="mp-wrap">
+      <table class="mp-table">
+        <thead><tr><th>Metric</th><th>Why</th><th>Suggestion</th></tr></thead>
+        <tbody>
+          <tr><td>Social media posts, engagement growth, search ranking, local SEO clicks</td><td>Not entered since June; marketing activity rather than results</td><td>Drop (the 2027 template already does)</td></tr>
+          <tr><td>Net Promoter Score</td><td>Never collected</td><td>Drop, or start a simple owner survey</td></tr>
+          <tr><td>Prospect, tenant and owner response time</td><td>Identical in all three markets most months, so likely estimated</td><td>Keep owner response time only, measured in AppFolio (as in 2027)</td></tr>
+          <tr><td>Application processing time</td><td>1.5 days every month, all markets</td><td>Review quarterly instead of monthly</td></tr>
+          <tr><td>Active 30 / 60 / 90</td><td>Entered as counts but the goals are ratios (2x, 7x, 5x)</td><td>Replace with 90-day pipeline coverage (as in 2027)</td></tr>
+          <tr><td>Warranty visits per rehab</td><td>0 every month</td><td>Track as an exception only</td></tr>
+          <tr><td>Average rehab cost per door, rehab completion time ($1,000 per day)</td><td>A goal of $0, and a goal of 1,000 against values in days</td><td>Redefine, or keep rehab profitability and on-time completion only</td></tr>
+          <tr><td>Vacancy rate</td><td>2026 goal is 30%; the 2027 template uses 8%</td><td>Confirm the goal</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <details class="mp-details" id="notes">
+    <summary>How these numbers are worked out</summary>
+    <ul>
+      <li>Scorecard figures come from AppFolio where it has the metric (marked AppFolio), and otherwise from the 2026 scorecard workbook. Goals are the 2026 goals on that workbook.</li>
+      <li>Combined markets: counts and dollar amounts (doors, owner debt, credits, doors closed, reviews) are summed across Georgia, Tennessee and North Carolina. Rates and times are averaged, weighted by each market's end-of-month doors where all three are entered.</li>
+      <li>2026 YTD is the average of the months entered so far for rates and times, and the total for counts and dollar amounts.</li>
+      <li>Insurance compliance entered as whole numbers (for example 96.83 in Georgia for September to November) is read as a percentage.</li>
+      <li>AppFolio data is refreshed every Monday morning. Jobber jobs and invoices refresh hourly on weekdays.</li>
+    </ul>
+  </details>
+  </div>
+
+  <div id="co-mpp" hidden>
+    <h1 class="mp-title">Motion Property Preservation</h1>
+    <p class="mp-sub">Work-order speed and billing from Jobber (hourly), and MPP income, labor and supplies from QuickBooks. Jobber has been in use since September 2026.</p>
+    <div class="mp-grid">
+      <div class="mp-card"><h3>Jobs completed, last 30 days</h3><div class="mp-big" data-source="mppSum" data-draw="mDone">—</div><div class="mp-meta" data-draw="mWithin7">—</div></div>
+      <div class="mp-card"><h3>Median work-order close time, last 30 days</h3><div class="mp-big" data-source="mppSum" data-draw="mMedian">—</div><div class="mp-meta">Job created to job completed in Jobber</div></div>
+      <div class="mp-card"><h3>Open jobs</h3><div class="mp-big" data-source="mppSum" data-draw="mOpen">—</div><div class="mp-meta" data-draw="mOpen14">—</div></div>
+      <div class="mp-card"><h3>Done, not invoiced</h3><div class="mp-big" data-source="mppSum" data-draw="mReqInv">—</div><div class="mp-meta">Jobber jobs needing an invoice</div></div>
+      <div class="mp-card"><h3>Unpaid invoices</h3><div class="mp-big" data-source="mppSum" data-draw="mUnpaid">—</div><div class="mp-meta" data-draw="mUnpaidN">—</div></div>
+    </div>
+    <h2 class="mp-h2" id="mpp-month">By month</h2>
+    <div class="mp-wrap">
+      <table class="mp-table" data-source="mppMonthly" data-row-key="month">
+        <thead><tr><th>Month</th><th class="mp-num">Jobs completed</th><th class="mp-num">Median close time</th><th class="mp-num">Closed within 7 days</th><th class="mp-num">Invoiced (Jobber)</th><th class="mp-num">Collected on those</th><th class="mp-num">MPP income (QB)</th><th class="mp-num">MPP labor (QB)</th><th class="mp-num">MPP supplies (QB)</th><th class="mp-num">Gross margin</th></tr></thead>
+        <tbody data-draw="mppMonthRows"></tbody>
+      </table>
+    </div>
+    <p class="mp-note" style="margin-top: var(--cds-gap-sm)">Many September jobs were marked complete in Jobber on October 15 in one batch, so September and October close times run long. QuickBooks only has separate MPP Income, MPP Labor and MPP Supplies accounts from October 2026; before that MPP costs sit in Cost of labor and Supplies &amp; materials.</p>
+    <h2 class="mp-h2" id="mpp-open">Open jobs, oldest first</h2>
+    <div class="mp-wrap mp-scroll">
+      <table class="mp-table" data-source="mpp_open" data-row-key="job">
+        <thead><tr><th>Job</th><th>Title</th><th>Property</th><th>Created</th><th class="mp-num">Days open</th></tr></thead>
+        <tbody data-draw="mppOpenRows"></tbody>
+      </table>
+    </div>
+    <h2 class="mp-h2" id="mpp-reqinv">Done but not invoiced</h2>
+    <div class="mp-wrap">
+      <table class="mp-table" data-source="mpp_reqinv" data-row-key="job">
+        <thead><tr><th>Job</th><th>Title</th><th>Property</th><th>Completed</th><th class="mp-num">Job total</th></tr></thead>
+        <tbody data-draw="mppReqRows"></tbody>
+      </table>
+    </div>
+    <p class="mp-note" style="margin-top: var(--cds-gap-sm)">Draft and past-due invoices, and whether each one reached AppFolio, are on the Motion PMG view under Billing check.</p>
+  </div>
+
+  <div id="co-tv" class="tv" hidden>
+    <div class="tv-sec">
+      <div class="tv-label">Motion PMG · all markets</div>
+      <div class="tv-grid">
+        <div class="tv-tile"><h3>Doors</h3><div class="tv-big" data-source="scTable" data-field="value" data-where="ID=eom_doors" data-draw="tileVal" data-id="eom_doors">—</div><div class="tv-meta" data-source="scTable" data-draw="tileUnits">—</div></div>
+        <div class="tv-tile"><h3>Net door growth this month</h3><div class="tv-big" data-source="scTable" data-draw="netDoors">—</div></div>
+        <div class="tv-tile"><h3>Vacancy</h3><div class="tv-big" data-source="scTable" data-field="value" data-where="ID=r22" data-draw="tileVal" data-id="r22">—</div><div class="tv-meta" data-draw="tileMeta" data-id="r22">—</div></div>
+        <div class="tv-tile"><h3>Tenant delinquency</h3><div class="tv-big" data-source="scTable" data-field="value" data-where="ID=r18" data-draw="tileVal" data-id="r18">—</div><div class="tv-meta" data-draw="tileMeta" data-id="r18">—</div></div>
+        <div class="tv-tile"><h3>Open work orders</h3><div class="tv-big" data-source="boardSum" data-field="open" data-row="0" data-draw="bOpen">—</div><div class="tv-meta">AppFolio, not completed</div></div>
+        <div class="tv-tile"><h3>30+ days, no Jobber job</h3><div class="tv-big" data-source="boardSum" data-field="stale" data-row="0" data-draw="bStale">—</div><div class="tv-meta">Work orders needing attention</div></div>
+        <div class="tv-tile"><h3>New Google reviews</h3><div class="tv-big" data-source="scTable" data-field="value" data-where="ID=r54" data-draw="tileVal" data-id="r54">—</div><div class="tv-meta" data-draw="tileMeta" data-id="r54">—</div></div>
+        <div class="tv-tile"><h3>Fort Valley owed</h3><div class="tv-big" data-source="ftvSum" data-draw="fTotal">—</div><div class="tv-meta" data-draw="fNeverN">—</div></div>
+        <div class="tv-tile"><h3>Utilities to bill back</h3><div class="tv-big" data-source="utilSum" data-draw="uHigh">—</div><div class="tv-meta" data-draw="uHighN">—</div></div>
+      </div>
+    </div>
+    <div class="tv-sec">
+      <div class="tv-label">Motion Property Preservation · Jobber</div>
+      <div class="tv-grid">
+        <div class="tv-tile"><h3>Jobs done, last 30 days</h3><div class="tv-big" data-source="mppSum" data-draw="mDone">—</div><div class="tv-meta" data-draw="mWithin7">—</div></div>
+        <div class="tv-tile"><h3>Median close time</h3><div class="tv-big" data-source="mppSum" data-draw="mMedian">—</div><div class="tv-meta">Created to completed, last 30 days</div></div>
+        <div class="tv-tile"><h3>Open jobs</h3><div class="tv-big" data-source="mppSum" data-draw="mOpen">—</div><div class="tv-meta" data-draw="mOpen14">—</div></div>
+        <div class="tv-tile"><h3>Done, not invoiced</h3><div class="tv-big" data-source="mppSum" data-draw="mReqInv">—</div><div class="tv-meta">Jobs waiting on an invoice</div></div>
+        <div class="tv-tile"><h3>Draft invoices</h3><div class="tv-big" data-source="billSum" data-field="draftN" data-row="0" data-draw="draftN">—</div><div class="tv-meta"><span data-source="billSum" data-field="draftAmt" data-row="0" data-draw="draftAmt">—</span> not sent</div></div>
+        <div class="tv-tile"><h3>Past-due invoices</h3><div class="tv-big" data-source="billSum" data-field="pastDueN" data-row="0" data-draw="pastDueN">—</div><div class="tv-meta"><span data-source="billSum" data-field="pastDueAmt" data-row="0" data-draw="pastDueAmt">—</span> overdue</div></div>
+      </div>
+    </div>
+    <p class="tv-stamp" data-draw="tvStamp">—</p>
+  </div>
+
+  <div id="co-mr" hidden>
+    <h1 class="mp-title">Motion Realty</h1>
+    <p class="mp-sub">From QuickBooks only: Brokerage Services income and Commissions &amp; fees. No Realty transaction system is connected yet.</p>
+    <div class="mp-grid">
+      <div class="mp-card"><h3>Brokerage income, 2026</h3><div class="mp-big" data-source="mrYtdSum" data-draw="mrYtd">—</div><div class="mp-meta" data-draw="mrYtdNet">—</div></div>
+    </div>
+    <h2 class="mp-h2" id="mr-month">By month</h2>
+    <div class="mp-wrap">
+      <table class="mp-table" data-source="mrMonthly" data-row-key="month">
+        <thead><tr><th>Month</th><th class="mp-num">Brokerage income</th><th class="mp-num">Commissions paid</th><th class="mp-num">Net</th></tr></thead>
+        <tbody data-draw="mrRows"></tbody>
+      </table>
+    </div>
+    <h2 class="mp-h2" id="mr-next">To track Realty properly</h2>
+    <ul class="mp-note">
+      <li>Suggested weekly metrics: active listings, pending deals, closings and sales volume this month, gross commission income, average days to close, and leads by source.</li>
+      <li>These need the system the agents use for deals and listings (for example dotloop, SkySlope, Lofty or the MLS). Connect it and the Monday refresh can fill this view.</li>
+      <li>Until then, a QuickBooks Location for Realty (like the MPP one) would let income and costs split out cleanly.</li>
+    </ul>
+  </div>
+</div>
+
+</div>
+<script src="dash.js"></script>
+<script src="sc.js"></script>
+<script src="app.js"></script>
+<script src="ramp.js"></script>
+<script src="companies.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

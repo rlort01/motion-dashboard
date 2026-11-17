@@ -1,0 +1,100 @@
+
+.mp { font-family: var(--font-anthropic-sans); color: var(--color-fg); }
+.mp-title { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0 0 var(--cds-gap-xs); }
+.mp-sub { color: var(--color-fg-muted); font-size: var(--cds-font-size-body); margin: 0 0 var(--cds-gap-md); }
+.mp-bar { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); align-items: center; margin-bottom: var(--cds-gap-md); }
+.mp-bar label { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); display: flex; flex-direction: column; gap: 2px; }
+.mp-tabs { display: flex; gap: var(--cds-gap-xs); border-bottom: 1px solid var(--color-border-line); margin: var(--cds-gap-md) 0; flex-wrap: wrap; }
+.mp-tab { background: none; border: 0; border-bottom: 2px solid transparent; padding: var(--cds-pad-sm) var(--cds-pad-md); font: inherit; color: var(--color-fg-muted); cursor: pointer; }
+.mp-tab[aria-selected="true"] { color: var(--color-fg); border-bottom-color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
+.mp-h2 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: var(--cds-gap-lg) 0 var(--cds-gap-sm); }
+.mp-note { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin: 0 0 var(--cds-gap-sm); }
+.mp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--cds-gap-sm); }
+.mp-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-md) var(--cds-pad-lg); min-height: 104px; display: flex; flex-direction: column; gap: 4px; }
+.mp-card h3 { margin: 0; font-size: var(--cds-font-size-caption); font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); }
+.mp-big { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: 30px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.mp-meta { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.mp-pill { display: inline-block; font-size: var(--cds-font-size-caption); padding: 1px 8px; border-radius: 999px; border: 1px solid var(--color-border-line); }
+.mp-ok { color: var(--color-ok); border-color: var(--color-ok); }
+.mp-bad { color: var(--color-bad); border-color: var(--color-bad); }
+.mp-warn { color: var(--color-warn); border-color: var(--color-warn); }
+.mp-card.mp-off { opacity: .75; }
+.mp-card.mp-off .mp-big { font-size: 18px; font-family: var(--font-anthropic-sans); color: var(--color-fg-muted); }
+.mp-charts { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--cds-gap-sm); }
+.mp-chart { position: relative; background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-md); }
+.mp-chart h3 { margin: 0 0 var(--cds-gap-xs); font-size: var(--cds-font-size-caption); font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); }
+.mp-plot { min-height: 160px; }
+.mp-plot svg text { fill: var(--cds-text-secondary); font-size: var(--cds-font-size-caption); }
+.mp-tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); box-shadow: var(--cds-shadow-popover); border-radius: var(--cds-radius); padding: 4px 8px; font-size: var(--cds-font-size-caption); white-space: nowrap; }
+.mp-wrap { overflow-x: auto; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); }
+.mp-table { width: 100%; border-collapse: collapse; font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
+.mp-table th { text-align: left; font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); padding: 6px 8px; border-bottom: 1px solid var(--color-border-line); background: var(--color-panel); position: sticky; top: 0; white-space: nowrap; }
+.mp-table td { padding: 6px 8px; border-bottom: 1px solid var(--color-border-line); vertical-align: top; }
+.mp-table td.mp-num, .mp-table th.mp-num { text-align: right; }
+.mp-table a { color: inherit; }
+.mp-scroll { max-height: 520px; overflow-y: auto; }
+.mp-chips { display: flex; flex-wrap: wrap; gap: var(--cds-gap-xs); margin-bottom: var(--cds-gap-sm); }
+.mp-chip { font: inherit; font-size: var(--cds-font-size-caption); background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: 999px; padding: 3px 10px; cursor: pointer; color: var(--color-fg); }
+.mp-chip[aria-pressed="true"] { background: var(--color-fg); color: var(--color-bg); }
+.mp-details { margin-top: var(--cds-gap-lg); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.mp-details li { margin-bottom: 4px; }
+.mp-plot-lg { min-height: 250px; }
+.mp-legend { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin-top: 4px; }
+.mp-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.mp-legend i { display: inline-block; width: 12px; height: 3px; border-radius: 2px; }
+.mp-table tbody tr:focus { outline: 2px solid var(--color-border-line); }
+
+/* ---- Motion brand (Motion design system: navy theme) ---- */
+.mp {
+  --m-midnight: #061223; --m-navy: #15203d; --m-beige: #f0cd86; --m-gold: #ab8520; --m-cream: #fff9ea; --m-amber: #e2ae54;
+  --color-bg: var(--m-midnight); --color-fg: var(--m-cream); --color-fg-muted: rgba(255, 249, 234, 0.72);
+  --color-panel: var(--m-navy); --color-border-line: rgba(171, 133, 32, 0.55);
+  --color-ok: #8fd3a8; --color-bad: #f2968c; --color-warn: var(--m-amber);
+  --cds-text-secondary: rgba(255, 249, 234, 0.72); --cds-chart-grid: rgba(171, 133, 32, 0.22); --cds-chart-axis: var(--m-gold); --cds-chart-reference: var(--m-beige);
+  --cds-surface-popover: var(--m-navy); --cds-border: var(--m-gold); --cds-radius: 0px; --cds-shadow-popover: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --font-anthropic-serif: "Didot LT Pro", "GFS Didot", Didot, serif;
+  --font-anthropic-sans: Arial, Calibri, "Source Sans 3", sans-serif;
+  background: var(--m-midnight); color: var(--m-cream); padding: var(--cds-pad-lg, 24px); border: 1px solid var(--m-gold); outline: 2px solid var(--m-beige); outline-offset: -8px;
+}
+.mp-brand { display: flex; align-items: center; gap: 16px; padding: 8px 8px 16px; margin-bottom: 8px; border-bottom: 1px solid var(--m-gold); flex-wrap: wrap; }
+.mp-brand img { height: 44px; width: auto; }
+.mp-brand-name { font-family: "Didot LT Pro", "GFS Didot", Didot, serif; color: var(--m-beige); text-transform: uppercase; letter-spacing: 0.07em; font-size: 28px; line-height: 1; margin: 0; }
+.mp-brand-slogan { font-family: "Myriad Hebrew", "Myriad Pro", "Source Sans 3", sans-serif; color: var(--m-beige); text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; margin: 4px 0 0; }
+.mp-brand #company-bar { margin: 0 0 0 auto; }
+.mp-title { color: var(--m-beige); text-transform: uppercase; letter-spacing: 0.07em; }
+.mp-h2 { font-family: "Didot LT Pro", "GFS Didot", Didot, serif; font-weight: 400; color: var(--m-beige); letter-spacing: 0.04em; }
+.mp-card, .mp-chart, .mp-wrap, .mp-chip, .mp-pill { border-radius: 0; }
+.mp-card { border-color: rgba(171, 133, 32, 0.55); }
+.mp-card h3, .mp-table th { color: var(--m-beige); letter-spacing: 0.04em; }
+.mp-big { color: var(--m-cream); }
+.mp-table th { background: var(--m-navy); }
+.mp-table a { color: var(--m-beige); }
+.mp-tab { text-transform: uppercase; letter-spacing: 0.08em; font-size: var(--cds-font-size-caption); }
+.mp-tab[aria-selected="true"] { color: var(--m-beige); border-bottom-color: var(--m-beige); }
+.mp-chip[aria-pressed="true"] { background: var(--m-beige); color: var(--m-midnight); border-color: var(--m-beige); }
+.mp .dash-select { background: var(--m-navy); color: var(--m-cream); border: 1px solid var(--m-gold); border-radius: 0; font: inherit; padding: 4px 8px; }
+.mp :focus-visible { outline: 2px solid var(--m-amber); outline-offset: 2px; }
+.mp-details summary { color: var(--m-beige); }
+/* TV board: large type for a wall screen */
+.tv-sec { margin-bottom: 28px; }
+.tv-label { display: flex; align-items: center; gap: 16px; font-family: "Myriad Hebrew", "Myriad Pro", "Source Sans 3", sans-serif; text-transform: uppercase; letter-spacing: 0.3em; font-size: clamp(12px, 1.1vw, 18px); color: var(--m-beige); margin: 8px 0 14px; }
+.tv-label::after { content: ""; flex: 1; height: 1px; background: var(--m-gold); }
+.tv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.tv-tile { background: var(--m-navy); border: 1px solid rgba(171, 133, 32, 0.6); padding: clamp(14px, 1.4vw, 24px); display: flex; flex-direction: column; gap: 6px; min-height: clamp(120px, 14vh, 200px); }
+.tv-tile h3 { margin: 0; font-weight: 400; color: var(--m-beige); text-transform: uppercase; letter-spacing: 0.08em; font-size: clamp(12px, 1vw, 17px); }
+.tv-big { font-family: "Didot LT Pro", "GFS Didot", Didot, serif; color: var(--m-cream); font-size: clamp(36px, 4.2vw, 76px); line-height: 1.05; font-variant-numeric: tabular-nums; }
+.tv-meta { color: rgba(255, 249, 234, 0.72); font-size: clamp(12px, 1vw, 17px); }
+.tv-stamp { text-align: right; color: rgba(255, 249, 234, 0.6); font-size: 13px; margin: 0; }
+/* Stand-ins for the variables the Claude artifact host provided */
+:root {
+  --cds-gap-xs: 4px; --cds-gap-sm: 8px; --cds-gap-md: 16px; --cds-gap-lg: 28px;
+  --cds-pad-sm: 6px; --cds-pad-md: 12px; --cds-pad-lg: 24px;
+  --cds-font-size-caption: 13px; --cds-font-size-body: 15px; --cds-font-size-heading: 19px; --cds-font-size-title: 30px;
+  --cds-font-weight-medium: 600; --cds-radius: 0px;
+}
+html, body { margin: 0; background: #061223; }
+body { padding: 12px; min-height: 100vh; box-sizing: border-box; }
+.login { max-width: 420px; margin: 12vh auto; }
+.login input { width: 100%; box-sizing: border-box; padding: 10px; font: inherit; background: #15203d; color: #fff9ea; border: 1px solid #ab8520; margin: 8px 0 12px; }
+.login button { font: inherit; padding: 10px 18px; background: #f0cd86; color: #061223; border: 0; cursor: pointer; text-transform: uppercase; letter-spacing: .08em; }
+.mp-err { color: #f2968c; }

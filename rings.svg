@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="250 230 890 308">
+  <defs>
+    <linearGradient id="g1" x1="679.29" y1="384" x2="968.46" y2="384" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#f0cd86"/><stop offset="1" stop-color="#fde9a7"/></linearGradient>
+    <linearGradient id="g2" x1="543.22" y1="384" x2="828.1" y2="384" gradientUnits="userSpaceOnUse"><stop offset=".01" stop-color="#e2ae54"/><stop offset=".56" stop-color="#f1ce82"/><stop offset=".99" stop-color="#fde9a7"/></linearGradient>
+    <linearGradient id="g3" x1="400.48" y1="384" x2="683.35" y2="384" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#d0993a"/><stop offset=".39" stop-color="#e0b360"/><stop offset="1" stop-color="#f0cd86"/></linearGradient>
+    <linearGradient id="g4" x1="266.84" y1="384" x2="546.86" y2="384" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ae792b"/><stop offset=".38" stop-color="#d0993a"/><stop offset=".99" stop-color="#e2ae54"/></linearGradient>
+    <linearGradient id="g5" x1="835.35" y1="384" x2="1122" y2="384" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fde9a7"/><stop offset=".26" stop-color="#f0cd86"/><stop offset=".54" stop-color="#e2ae54"/><stop offset=".77" stop-color="#d0993a"/><stop offset=".99" stop-color="#ae7912"/></linearGradient>
+  </defs>
+  <g fill="none" stroke-width="16">
+    <ellipse cx="823.88" cy="384" rx="137.51" ry="137.47" stroke="url(#g1)"/>
+    <ellipse cx="685.66" cy="384" rx="138.17" ry="138.2" stroke="url(#g2)"/>
+    <ellipse cx="541.91" cy="384" rx="138.58" ry="138.62" stroke="url(#g3)"/>
+    <ellipse cx="406.85" cy="384" rx="138.58" ry="138.58" stroke="url(#g4)"/>
+  </g>
+  <path fill="url(#g5)" d="M978.65,244.94c-30.39,0-58.650,9.18-81.83,24.92-4.570,3.1-8.960,6.440-13.1,10.03-15.35,13.13-27.69,29.36-36.03,47.72-2.320,4.990-4.320,10.090-5.950,15.380q-.06,0,0,.06c-4.2,12.89-6.390,26.690-6.390,40.910,0,11.980,1.570,23.590,4.510,34.650,3.070,11.670,7.710,22.8,13.6,33.070,7.330,12.830,16.790,24.440,27.880,34.350,2,1.820,4.140,3.590,6.270,5.290,8.020,6.440,16.850,12.1,26.320,16.720,19.420,9.610,41.410,15.020,64.720,15.020,79.2,0,143.350-62.310,143.350-139.090s-64.160-139.030-143.350-139.030Z"/>
+</svg>
