@@ -162,16 +162,22 @@
     }
   });
 
+  // Work orders the property owner is handling themselves (AppFolio vendor = owner)
+  const ownerSet = () => { const d = dash.data('owner_wo'); return new Set(d.status === 'ok' ? d.data.map((r) => r.WO) : []); };
+  const isOwnerWo = (r, set) => /\(owner\)/i.test(r.vendor || '') || set.has(r.wo);
+  window.mpIsOwnerWo = isOwnerWo;
+
   dash.calc('boardSum', {
     title: 'Work-order board totals',
     description: 'Counts from the open work-order board.',
-    inputs: ['board', 'jobber_jobs'],
-    fn: (board, jobs) => [{
+    inputs: ['board', 'jobber_jobs', 'owner_wo'],
+    fn: (board, jobs, ow) => { const owners = new Set(ow.map((r) => r.WO)); return [{
       open: board.length,
       linked: board.filter((r) => r.jobberJob).length,
-      stale: board.filter((r) => !r.jobberJob && r.days >= 30).length,
+      stale: board.filter((r) => !r.jobberJob && r.days >= 30 && !isOwnerWo(r, owners)).length,
+      owner: board.filter((r) => isOwnerWo(r, owners)).length,
       jobberAttn: jobs.filter((j) => j.status === 'late' || j.status === 'action_required').length
-    }]
+    }]; }
   });
 
   dash.calc('jobberOnly', {
@@ -417,9 +423,10 @@
     const d = dash.data('board');
     tb.replaceChildren();
     if (d.status !== 'ok') return;
-    const v = window.mpView.wo;
-    d.data.filter((r) => v === 'all' || (v === 'linked' && r.jobberJob) || (v === 'nojob' && !r.jobberJob) || (v === 'old' && r.days >= 30)).forEach((r) => {
+    const v = window.mpView.wo, owners = ownerSet();
+    d.data.filter((r) => v === 'all' || (v === 'linked' && r.jobberJob) || (v === 'nojob' && !r.jobberJob) || (v === 'old' && r.days >= 30) || (v === 'owner' && isOwnerWo(r, owners))).forEach((r) => {
       const tr = document.createElement('tr'); tr.setAttribute('data-key', r.wo);
+      if (isOwnerWo(r, owners)) { tr.className = 'mp-owner'; tr.title = 'The owner is handling this work order'; }
       td(tr, '#' + r.wo); td(tr, r.group); td(tr, r.address); td(tr, r.desc);
       td(tr, r.status + (r.priority === 'Urgent' ? ' · Urgent' : ''));
       const dc = td(tr, r.days, 'mp-num'); if (r.days >= 30) dc.style.color = 'var(--color-bad)';

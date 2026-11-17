@@ -98,3 +98,8 @@ body { padding: 12px; min-height: 100vh; box-sizing: border-box; }
 .login input { width: 100%; box-sizing: border-box; padding: 10px; font: inherit; background: #15203d; color: #fff9ea; border: 1px solid #ab8520; margin: 8px 0 12px; }
 .login button { font: inherit; padding: 10px 18px; background: #f0cd86; color: #061223; border: 0; cursor: pointer; text-transform: uppercase; letter-spacing: .08em; }
 .mp-err { color: #f2968c; }
+
+/* Owner-handled work orders */
+.mp-table tr.mp-owner td { background: rgba(240, 205, 134, 0.10); }
+.mp-table tr.mp-owner td:first-child { box-shadow: inset 3px 0 0 #f0cd86; }
+.mp-owner-card { border-left: 3px solid #f0cd86; }

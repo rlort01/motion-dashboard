@@ -177,7 +177,7 @@
     <div class="mp-grid" style="margin-bottom: var(--cds-gap-md)">
       <div class="mp-card"><h3>Open AppFolio work orders</h3><div class="mp-big" data-source="boardSum" data-field="open" data-row="0" data-draw="bOpen">—</div><div class="mp-meta">Not completed or canceled</div></div>
       <div class="mp-card"><h3>Linked to a Jobber job</h3><div class="mp-big" data-source="boardSum" data-field="linked" data-row="0" data-draw="bLinked">—</div><div class="mp-meta">Active Jobber jobs</div></div>
-      <div class="mp-card"><h3>Open 30+ days with no Jobber job</h3><div class="mp-big" data-source="boardSum" data-field="stale" data-row="0" data-draw="bStale">—</div><div class="mp-meta">Mostly mid-lease inspections still "Scheduled"</div></div>
+      <div class="mp-card"><h3>Open 30+ days with no Jobber job</h3><div class="mp-big" data-source="boardSum" data-field="stale" data-row="0" data-draw="bStale">—</div><div class="mp-meta">Owner-handled work orders not counted</div></div>
       <div class="mp-card"><h3>Jobber jobs late or needing action</h3><div class="mp-big" data-source="boardSum" data-field="jobberAttn" data-row="0" data-draw="bAttn">—</div><div class="mp-meta">Jobber status late or action required</div></div>
     </div>
     <div class="mp-chips" id="wo-view" role="group" aria-label="Show">
@@ -185,6 +185,7 @@
       <button class="mp-chip" data-woview="linked" aria-pressed="false">In Jobber</button>
       <button class="mp-chip" data-woview="nojob" aria-pressed="false">Not in Jobber</button>
       <button class="mp-chip" data-woview="old" aria-pressed="false">Open 30+ days</button>
+      <button class="mp-chip" data-woview="owner" aria-pressed="false">Owner handling</button>
     </div>
     <div class="mp-wrap mp-scroll" id="board">
       <table class="mp-table" data-source="board" data-row-key="wo">
@@ -201,6 +202,25 @@
           <th data-field="jobberDate">Jobber date</th>
         </tr></thead>
         <tbody data-draw="boardRows"></tbody>
+      </table>
+    </div>
+    <h2 class="mp-h2" id="owner-wo">Work orders the owner is handling</h2>
+    <p class="mp-note">AppFolio work orders assigned to the property's owner instead of a vendor. Owners rarely update AppFolio, so these are flagged for a follow-up: still open after 7 days (2 for urgent), or closed in the last 14 days with no vendor bill, so check with the tenant that it was actually fixed. Highlighted in gold here and on the board above.</p>
+    <div class="mp-grid" style="margin-bottom: var(--cds-gap-md)">
+      <div class="mp-card mp-owner-card"><h3>Need a follow-up</h3><div class="mp-big" data-source="ownerSum" data-draw="oFollow">—</div><div class="mp-meta" data-draw="oFollowN">—</div></div>
+      <div class="mp-card mp-owner-card"><h3>Open, owner handling</h3><div class="mp-big" data-source="ownerSum" data-draw="oOpen">—</div><div class="mp-meta" data-draw="oTotal">—</div></div>
+      <div class="mp-card mp-owner-card"><h3>New in the last 30 days</h3><div class="mp-big" data-source="ownerSum" data-draw="oNew">—</div><div class="mp-meta" data-draw="oNewN">—</div></div>
+      <div class="mp-card mp-owner-card"><h3>Properties with repeat requests</h3><div class="mp-big" data-source="ownerSum" data-draw="oRepeat">—</div><div class="mp-meta">3 or more owner work orders in 90 days</div></div>
+    </div>
+    <div class="mp-chips" id="owner-view" role="group" aria-label="Owner work orders">
+      <button class="mp-chip" data-oview="follow" aria-pressed="true">Open and follow-ups</button>
+      <button class="mp-chip" data-oview="repeat" aria-pressed="false">Repeat properties</button>
+      <button class="mp-chip" data-oview="all" aria-pressed="false">All 2026</button>
+    </div>
+    <div class="mp-wrap mp-scroll" id="owner-table">
+      <table class="mp-table" data-source="ownerWo" data-row-key="wo">
+        <thead><tr><th>AppFolio WO</th><th>Group</th><th>Property</th><th>Owner</th><th>Request</th><th>AppFolio status</th><th>Created</th><th>Closed</th><th>Follow-up</th></tr></thead>
+        <tbody data-draw="ownerRows"></tbody>
       </table>
     </div>
     <h2 class="mp-h2" id="jobber-only">Jobber jobs with no open AppFolio work order</h2>
@@ -494,6 +514,7 @@
         <div class="tv-tile"><h3>Tenant delinquency</h3><div class="tv-big" data-source="scTable" data-field="value" data-where="ID=r18" data-draw="tileVal" data-id="r18">—</div><div class="tv-meta" data-draw="tileMeta" data-id="r18">—</div></div>
         <div class="tv-tile"><h3>Open work orders</h3><div class="tv-big" data-source="boardSum" data-field="open" data-row="0" data-draw="bOpen">—</div><div class="tv-meta">AppFolio, not completed</div></div>
         <div class="tv-tile"><h3>30+ days, no Jobber job</h3><div class="tv-big" data-source="boardSum" data-field="stale" data-row="0" data-draw="bStale">—</div><div class="tv-meta">Work orders needing attention</div></div>
+        <div class="tv-tile"><h3>Owner work orders to follow up</h3><div class="tv-big" data-source="ownerSum" data-draw="oFollow">—</div><div class="tv-meta"><span data-source="ownerSum" data-draw="oOpen">—</span> open with the owner</div></div>
         <div class="tv-tile"><h3>New Google reviews</h3><div class="tv-big" data-source="scTable" data-field="value" data-where="ID=r54" data-draw="tileVal" data-id="r54">—</div><div class="tv-meta" data-draw="tileMeta" data-id="r54">—</div></div>
         <div class="tv-tile"><h3>Fort Valley owed</h3><div class="tv-big" data-source="ftvSum" data-draw="fTotal">—</div><div class="tv-meta" data-draw="fNeverN">—</div></div>
         <div class="tv-tile"><h3>Utilities to bill back</h3><div class="tv-big" data-source="utilSum" data-draw="uHigh">—</div><div class="tv-meta" data-draw="uHighN">—</div></div>
@@ -541,6 +562,7 @@
 <script src="app.js"></script>
 <script src="ramp.js"></script>
 <script src="companies.js"></script>
+<script src="owners.js"></script>
 <script src="main.js"></script>
 </body>
 </html>
