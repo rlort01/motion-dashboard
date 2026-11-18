@@ -6,6 +6,7 @@
   const okEmail = (e) => DOMAINS.some((d) => String(e || '').toLowerCase().trim().endsWith('@' + d));
 
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' } });
+  window.mpSupabase = sb;
   const $ = (id) => document.getElementById(id);
   const app = $('app'), login = $('login'), msg = $('loginMsg');
   let updated = null;
@@ -18,11 +19,31 @@
     const { data, error } = await sb.from('datasets').select('id,kind,rows,updated_at');
     if (error) { showLogin('Could not load data: ' + error.message); return; }
     if (!data.length) { showLogin('Signed in, but no data is shared with this account. Use your @motionpmg.com, @motionpropertypreservation.com or @motionrealty.com email.'); return; }
-    data.forEach((d) => dash._setDataset(d.id, 'ok', d.rows));
+    // Numbers typed on the "Enter numbers" tab take precedence over the workbook copy.
+    const ent = await sb.from('scorecard_entries').select('metric_id,market,month,value').eq('year', 2026);
+    data.forEach((d) => {
+      if (d.id === 'sc2026') {
+        window.mpWorkbook = d.rows;
+        if (!ent.error && ent.data && ent.data.length) {
+          const rows = d.rows.map((r) => Object.assign({}, r));
+          const at = new Map(rows.map((r, i) => [r.ID + '|' + r.MARKET + '|' + (+r.MONTH), i]));
+          const meta = new Map(); rows.forEach((r) => { if (!meta.has(r.ID)) meta.set(r.ID, r); });
+          ent.data.forEach((e) => {
+            const k = e.metric_id + '|' + e.market + '|' + e.month, v = e.value === null ? '' : String(e.value);
+            if (at.has(k)) rows[at.get(k)].VALUE = v;
+            else if (meta.has(e.metric_id)) rows.push(Object.assign({}, meta.get(e.metric_id), { MARKET: e.market, MONTH: String(e.month), VALUE: v }));
+          });
+          return dash._setDataset(d.id, 'ok', rows);
+        }
+      }
+      dash._setDataset(d.id, 'ok', d.rows);
+    });
+    if (window.mpEntry) window.mpEntry.load();
     updated = new Date(d3.max(data, (d) => new Date(d.updated_at)));
     dash._redraw();
   };
 
+  window.mpReloadData = () => load();
   const showApp = () => { login.hidden = true; app.hidden = false; load(); };
   const showLogin = (text) => { app.hidden = true; login.hidden = false; msg.textContent = text || ''; };
 

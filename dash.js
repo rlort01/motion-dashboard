@@ -57,14 +57,25 @@
   const redrawAll = () => {
     if (scheduled) return;
     scheduled = true;
-    requestAnimationFrame(() => { scheduled = false; cache = new Map(); draws.forEach((_, n) => runDraw(n)); });
+    requestAnimationFrame(() => { scheduled = false; cache = new Map(); draws.forEach((_, n) => runDraw(n)); fitNumbers(); });
   };
+  // Shrink a tile's big number until it fits its tile (long values, narrow screens).
+  const fitNumbers = () => {
+    document.querySelectorAll('.mp-big, .tv-big').forEach((el) => {
+      if (!el.offsetParent) return;
+      el.style.fontSize = '';
+      let fs = parseFloat(getComputedStyle(el).fontSize), n = 0;
+      while (el.scrollWidth > el.clientWidth + 1 && fs > 12 && n++ < 40) { fs -= 1; el.style.fontSize = fs + 'px'; }
+    });
+  };
+  window.mpFitNumbers = fitNumbers;
+  ['click', 'change'].forEach((t) => document.addEventListener(t, () => setTimeout(fitNumbers, 60), true));
 
   window.dash = {
     colors: ['#f0cd86', '#8fb8e8', '#8fd3a8', '#e2ae54', '#c9a0dc', '#f2968c'],
     calc: (name, def) => { calcs.set(name, { inputs: def.inputs || [], fn: def.fn }); },
     loader: (name, def) => { loaders.set(name, def); },
-    draw: (name, fn) => { if (fn) { if (!draws.has(name)) draws.set(name, fn); } else runDraw(name); }, // first registration wins, as in the artifact page
+    draw: (name, fn) => { if (fn) { if (!draws.has(name)) draws.set(name, fn); } else { runDraw(name); setTimeout(fitNumbers, 0); } }, // first registration wins, as in the artifact page
     data: (id) => get(id, new Set()),
     params: () => params,
     setParams: (p) => {
@@ -79,4 +90,5 @@
   };
   let resizeT;
   window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(redrawAll, 200); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitNumbers());
 })();

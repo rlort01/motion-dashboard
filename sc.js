@@ -209,7 +209,9 @@
     const a = findRow('doors_in'), b = findRow('doors_out');
     if (!a || !b || (a.value === null && b.value === null)) { el.textContent = '—'; return; }
     const n = (a.value || 0) - (b.value || 0);
-    el.textContent = (n > 0 ? '+' : '') + n + ' (' + (a.value || 0) + ' in, ' + (b.value || 0) + ' out)';
+    el.textContent = (n > 0 ? '+' : '') + n;
+    const sub = document.createElement('span'); sub.className = 'mp-big-sub'; sub.textContent = ' ' + (a.value || 0) + ' in, ' + (b.value || 0) + ' out';
+    el.appendChild(sub);
   });
 
   dash.draw('scSection', (tb) => {

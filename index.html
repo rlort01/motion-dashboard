@@ -58,6 +58,7 @@
     <button class="mp-tab" role="tab" data-tab="workorders" aria-selected="false">Work orders: AppFolio + Jobber</button>
     <button class="mp-tab" role="tab" data-tab="billing" aria-selected="false">Billing check</button>
     <button class="mp-tab" role="tab" data-tab="utilreview" aria-selected="false">Utilities to review</button>
+    <button class="mp-tab" role="tab" data-tab="entry" aria-selected="false">Enter numbers</button>
     <button class="mp-tab" role="tab" data-tab="sources" aria-selected="false">Data sources &amp; checks</button>
   </div>
 
@@ -385,6 +386,23 @@
     </div>
   </section>
 
+  <section id="entry" data-section hidden>
+    <p class="mp-note">Type each month's numbers here instead of in the scorecard spreadsheet. Pick the market and month, fill in the boxes, and save. Metrics the systems fill in automatically are shown but can't be typed over. Type percentages as plain numbers (12.5 means 12.5%). Every save records who entered it and when.</p>
+    <div class="mp-bar">
+      <label>Market <select class="dash-select" id="entryMarket" aria-label="Market to enter"></select></label>
+      <label>Month <select class="dash-select" id="entryMonth" aria-label="Month to enter"></select></label>
+      <button class="mp-chip mp-save" id="entrySave" type="button">Save numbers</button>
+      <span class="mp-note" id="entryMsg" aria-live="polite" style="margin:0"></span>
+    </div>
+    <div class="mp-wrap">
+      <table class="mp-table" id="entryTable">
+        <thead><tr><th>Metric</th><th>2026 goal</th><th>Value</th><th>Last entry</th></tr></thead>
+        <tbody id="entryRows" data-draw="entryTable"></tbody>
+      </table>
+    </div>
+    <p class="mp-note" style="margin-top: var(--cds-gap-sm)">Until everyone switches over, numbers still typed in the workbook show here as "From the workbook"; anything saved here takes their place.</p>
+  </section>
+
   <section id="sources" data-section hidden>
     <h2 class="mp-h2" id="src-schedule">How the dashboard stays current</h2>
     <p class="mp-note">A scheduled task refreshes the dashboard every Monday at 7:53 AM Eastern, ahead of the 10 AM meeting. It re-pulls AppFolio, Ramp, QuickBooks, LeadSimple and the scorecard workbook. Jobber jobs and invoices refresh every hour on weekdays. <span data-draw="lastUpdated"></span></p>
@@ -563,6 +581,7 @@
 <script src="ramp.js"></script>
 <script src="companies.js"></script>
 <script src="owners.js"></script>
+<script src="entry.js"></script>
 <script src="main.js"></script>
 </body>
 </html>
