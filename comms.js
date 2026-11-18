@@ -57,7 +57,7 @@
     });
     m.forEach((r) => { const x = p(r.NAME); x.mail++; });
     m.filter((r) => r.REPLIED && r.REPLIED_BY).forEach((r) => { const x = p(r.REPLIED_BY); x.rep++; x.repH.push(+r.BIZ_HOURS); });
-    const list = Array.from(P.values()).filter((x) => !/^Motion PMG\b/.test(x.name)).sort((a, b) => (b.ans + b.out + b.mail) - (a.ans + a.out + a.mail));
+    const list = Array.from(P.values()).filter((x) => x.name && !/^Motion PMG\b/.test(x.name)).sort((a, b) => (b.ans + b.out + b.mail) - (a.ans + a.out + a.mail));
     if (!list.length) { const tr = document.createElement('tr'); td(tr, 'No calls or emails in this period.'); tb.appendChild(tr); return; }
     list.forEach((x) => {
       const tr = document.createElement('tr');
@@ -81,7 +81,7 @@
       const c = td(tr, '');
       const pill = document.createElement('span');
       pill.className = 'mp-pill ' + (done ? 'mp-ok' : 'mp-bad');
-      pill.textContent = r.CALLBACK_MIN !== null ? 'Called back by ' + (r.CALLED_BACK_BY || 'team') + ' after ' + fmtMin(+r.CALLBACK_MIN) : r.CALLED_AGAIN ? 'Caller called again and got through' : 'No callback found in 3 days';
+      pill.textContent = r.CALLBACK_MIN !== null ? 'Called back by ' + (r.CALLED_BACK_BY || 'team') + ' after ' + fmtMin(+r.CALLBACK_MIN) : r.CALLED_AGAIN ? 'Caller called again and got through' : (Date.now() - new Date(r.START) < 3 * DAY ? 'No callback yet' : 'No callback within 3 days');
       c.appendChild(pill);
       tb.appendChild(tr);
     });
