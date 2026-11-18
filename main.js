@@ -21,6 +21,20 @@
     if (!data.length) { showLogin('Signed in, but no data is shared with this account. Use your @motionpmg.com, @motionpropertypreservation.com or @motionrealty.com email.'); return; }
     // Numbers typed on the "Enter numbers" tab take precedence over the workbook copy.
     const ent = await sb.from('scorecard_entries').select('metric_id,market,month,value').eq('year', 2026);
+    // Leads to showings refreshes daily from Tenant Turner (tt_funnel), ahead of the Monday copy in sys2026.
+    const tt = data.find((d) => d.id === 'tt_funnel'), sys = data.find((d) => d.id === 'sys2026');
+    if (tt && sys && tt.rows && sys.rows) {
+      const rows = sys.rows.map((r) => Object.assign({}, r));
+      const at = new Map(rows.map((r, i) => [r.ID + '|' + r.MARKET + '|' + (+r.MONTH), i]));
+      tt.rows.forEach((t) => {
+        const mo = +String(t.MONTH).slice(5, 7), yr = String(t.MONTH).slice(0, 4), leads = +t.LEADS, done = +t.SHOWINGS_DONE;
+        if (yr !== '2026' || !leads) return;
+        const k = 'r24|' + t.MARKET + '|' + mo, v = String(Math.round(done / leads * 10000) / 10000);
+        if (at.has(k)) rows[at.get(k)].VALUE = v;
+        else rows.push({ ID: 'r24', MARKET: t.MARKET, MONTH: String(mo), VALUE: v, NOTE: 'Tenant Turner showings that happened / new leads', SOURCE: 'Tenant Turner' });
+      });
+      sys.rows = rows;
+    }
     data.forEach((d) => {
       if (d.id === 'sc2026') {
         window.mpWorkbook = d.rows;
