@@ -145,3 +145,4 @@ tr.mp-entry-sec td { background: var(--m-navy); color: var(--m-beige); font-weig
 .mp-review-stars { color: #d9a400; letter-spacing: 1px; }
 .mp-review-low .mp-review-val { color: #b4532a; }
 .mp-review-n, .mp-review-asof { color: var(--color-fg-muted); font-size: 12px; }
+.mp-table tr.mp-attn td { background: color-mix(in srgb, var(--color-bad) 8%, transparent); }

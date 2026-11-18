@@ -7,7 +7,7 @@
 <title>Motion Dashboard</title>
 <link rel="icon" href="rings.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Source+Sans+3:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=202611182039">
+<link rel="stylesheet" href="styles.css?v=202611182338">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 </head>
@@ -60,6 +60,7 @@
     <button class="mp-tab" role="tab" data-tab="workorders" aria-selected="false">Work orders: AppFolio + Jobber</button>
     <button class="mp-tab" role="tab" data-tab="billing" aria-selected="false">Billing check</button>
     <button class="mp-tab" role="tab" data-tab="utilreview" aria-selected="false">Utilities to review</button>
+    <button class="mp-tab" role="tab" data-tab="comms" aria-selected="false">Communications</button>
     <button class="mp-tab" role="tab" data-tab="entry" aria-selected="false">Enter numbers</button>
     <button class="mp-tab" role="tab" data-tab="sources" aria-selected="false">Data sources &amp; checks</button>
   </div>
@@ -388,6 +389,44 @@
     </div>
   </section>
 
+  <section id="comms" data-section hidden>
+    <p class="mp-note">Teams Phone calls with outside numbers, and how fast owner and tenant emails get a first reply. Staff names and times only: no phone numbers, email addresses or message text are stored. <span data-draw="cmAsOf" data-source="comm_calls"></span></p>
+    <div class="mp-chips" role="group" aria-label="Period">
+      <button class="mp-chip" data-cmdays="7" aria-pressed="true">Last 7 days</button>
+      <button class="mp-chip" data-cmdays="30" aria-pressed="false">Last 30 days</button>
+    </div>
+    <div class="mp-grid" style="margin: var(--cds-gap-sm) 0 var(--cds-gap-md)">
+      <div class="mp-card"><h3>Incoming calls</h3><div class="mp-big" data-source="comm_calls" data-draw="cmIn">—</div><div class="mp-meta" data-draw="cmInN">—</div></div>
+      <div class="mp-card"><h3>Unanswered calls</h3><div class="mp-big" data-source="comm_calls" data-draw="cmMiss">—</div><div class="mp-meta" data-draw="cmMissN">—</div></div>
+      <div class="mp-card"><h3>Main-line wait to reach a person</h3><div class="mp-big" data-source="comm_calls" data-draw="cmWait">—</div><div class="mp-meta">From the call coming in to someone picking up (typical)</div></div>
+      <div class="mp-card"><h3>Outgoing calls</h3><div class="mp-big" data-source="comm_calls" data-draw="cmOut">—</div><div class="mp-meta" data-draw="cmOutN">—</div></div>
+      <div class="mp-card"><h3>Email first reply (Outlook)</h3><div class="mp-big" data-source="resp_email" data-draw="cmMail">—</div><div class="mp-meta" data-draw="cmMailN">—</div></div>
+    </div>
+    <h2 class="mp-h2">By person</h2>
+    <p class="mp-note">Answered: outside calls they picked up (main line or direct). Missed: calls to their direct number nobody picked up. Callbacks: unanswered calls they returned within 3 days, and how long it took. Email replies are from Outlook only; replies sent from AppFolio aren't counted yet.</p>
+    <div class="mp-wrap mp-scroll">
+      <table class="mp-table" data-source="comm_calls">
+        <thead><tr><th>Team member</th><th class="mp-num">Calls answered</th><th class="mp-num">Missed (direct)</th><th class="mp-num">Calls made</th><th class="mp-num">Phone hours</th><th class="mp-num">Callbacks · typical time</th><th class="mp-num">Owner/tenant emails in</th><th class="mp-num">Emails replied · typical time</th></tr></thead>
+        <tbody data-draw="cmPeople"></tbody>
+      </table>
+    </div>
+    <h2 class="mp-h2">Unanswered calls</h2>
+    <p class="mp-note">Outside calls nobody picked up (under 10 seconds with a person), newest first. Red means no one called that number back and the caller didn't get through on a later call within 3 days.</p>
+    <div class="mp-wrap mp-scroll">
+      <table class="mp-table" data-source="comm_calls">
+        <thead><tr><th>When</th><th>Line</th><th>Rang</th><th>Follow-up</th></tr></thead>
+        <tbody data-draw="cmMissed"></tbody>
+      </table>
+    </div>
+    <h2 class="mp-h2">Week by week</h2>
+    <div class="mp-wrap">
+      <table class="mp-table" data-source="comm_calls">
+        <thead><tr><th>Week</th><th class="mp-num">Calls in</th><th class="mp-num">Answered</th><th class="mp-num">Main-line wait</th><th class="mp-num">Unanswered</th><th class="mp-num">Not called back</th><th class="mp-num">Calls made</th><th class="mp-num">Owner/tenant emails</th><th class="mp-num">Typical email reply</th></tr></thead>
+        <tbody data-draw="cmWeeks"></tbody>
+      </table>
+    </div>
+  </section>
+
   <section id="entry" data-section hidden>
     <p class="mp-note">Type each month's numbers here instead of in the scorecard spreadsheet. Pick the market and month, fill in the boxes, and save. Metrics the systems fill in automatically are shown but can't be typed over. Type percentages as plain numbers (12.5 means 12.5%). Every save records who entered it and when.</p>
     <div class="mp-bar">
@@ -426,6 +465,7 @@
           <tr><td>Utility and materials bill-back check</td><td>Ramp (utility payments and materials purchases) against AppFolio bills to the property</td><td>Automatic, every Monday</td><td>In Ramp, require the QuickBooks Customer/Job (property) field on Owner Utilities Paid and Supplies &amp; materials purchases; until then the property is read from the memo.</td></tr>
           <tr><td>Lease renewals</td><td>AppFolio tracks renewals, but the connector's lease records don't hold every 2026 expiration (it found 14; its renewal list shows only renewed leases, so 100% every month)</td><td>Entered in the workbook</td><td>Schedule AppFolio's Lease Expiration / Renewal Summary report to email or OneDrive monthly; the Monday refresh can then read it.</td></tr>
           <tr><td>Tenant and prospect response time</td><td>AppFolio keeps when a request was created and its latest assignment, not the first reply, and has no first-contact time on guest cards</td><td>Entered in the workbook</td><td>Use AppFolio's Work Order or Guest Card response reports if your plan has them, or keep entering.</td></tr>
+          <tr><td>Communications tab</td><td>Microsoft 365 (read-only app "Motion Dashboard"): Teams Phone call records, and Outlook message times for emails from current AppFolio owners and tenants. No email text, addresses or phone numbers are stored</td><td>Automatic, every night</td><td>Nothing. Replies sent from AppFolio aren't counted yet.</td></tr>
           <tr><td>Google review ratings</td><td>Google Business Profile through Windsor.ai: all-time star rating and review count for the Loganville (Georgia), Chattanooga and Raleigh profiles</td><td>Automatic, every morning</td><td>Nothing. Charlotte, Macon and Fort Valley have no Google profile connected.</td></tr>
           <tr><td>Leads to showings, showings to applications</td><td>Tenant Turner: showings that actually happened (self-access code sent, or confirmed and in the past; no-shows and cancellations left out) / new leads, by month. Showings to applications: AppFolio applications received / those same Tenant Turner showings</td><td>Automatic: Tenant Turner every morning, AppFolio applications every Monday</td><td>Nothing.</td></tr>
           <tr><td>Mid-lease inspection and Tenant Turner check compliance</td><td>AppFolio work orders: of the inspection or Tenant Turner work orders created that month, the share completed</td><td>Automatic, every Monday</td><td>Close the work order in AppFolio when the inspection or check is done, or it counts as missed.</td></tr>
@@ -581,14 +621,15 @@
 </div>
 
 </div>
-<script src="dash.js?v=202611182039"></script>
-<script src="sc.js?v=202611182039"></script>
-<script src="app.js?v=202611182039"></script>
-<script src="ramp.js?v=202611182039"></script>
-<script src="companies.js?v=202611182039"></script>
-<script src="owners.js?v=202611182039"></script>
-<script src="reviews.js?v=202611182039"></script>
-<script src="entry.js?v=202611182039"></script>
-<script src="main.js?v=202611182039"></script>
+<script src="dash.js?v=202611182338"></script>
+<script src="sc.js?v=202611182338"></script>
+<script src="app.js?v=202611182338"></script>
+<script src="ramp.js?v=202611182338"></script>
+<script src="companies.js?v=202611182338"></script>
+<script src="owners.js?v=202611182338"></script>
+<script src="reviews.js?v=202611182338"></script>
+<script src="comms.js?v=202611182338"></script>
+<script src="entry.js?v=202611182338"></script>
+<script src="main.js?v=202611182338"></script>
 </body>
 </html>

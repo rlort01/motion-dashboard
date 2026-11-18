@@ -43,6 +43,7 @@
       });
       sys.rows = rows;
     }
+    window.mpDsTimes = Object.fromEntries(data.map((d) => [d.id, d.updated_at]));
     data.forEach((d) => {
       if (d.id === 'sc2026') {
         window.mpWorkbook = d.rows;
