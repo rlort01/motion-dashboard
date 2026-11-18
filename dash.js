@@ -57,7 +57,7 @@
   const redrawAll = () => {
     if (scheduled) return;
     scheduled = true;
-    requestAnimationFrame(() => { scheduled = false; cache = new Map(); draws.forEach((_, n) => runDraw(n)); fitNumbers(); });
+    setTimeout(() => { scheduled = false; cache = new Map(); draws.forEach((_, n) => runDraw(n)); fitNumbers(); }, 0); // not requestAnimationFrame: it pauses in background tabs
   };
   // Shrink a tile's big number until it fits its tile (long values, narrow screens).
   const fitNumbers = () => {
