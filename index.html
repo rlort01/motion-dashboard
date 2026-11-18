@@ -7,7 +7,7 @@
 <title>Motion Dashboard</title>
 <link rel="icon" href="rings.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Source+Sans+3:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=202611182022">
+<link rel="stylesheet" href="styles.css?v=202611182039">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 </head>
@@ -43,6 +43,8 @@
   <div id="co-pmg">
   <h1 class="mp-title" id="top">Motion PMG 2026 Scorecard</h1>
   <p class="mp-sub" id="takeaway"><span data-draw="takeaway">—</span></p>
+
+  <div class="mp-reviews" data-source="reviews" data-draw="reviews" aria-label="Google review ratings"></div>
 
   <div class="mp-bar" id="filters">
     <label>Market
@@ -424,6 +426,7 @@
           <tr><td>Utility and materials bill-back check</td><td>Ramp (utility payments and materials purchases) against AppFolio bills to the property</td><td>Automatic, every Monday</td><td>In Ramp, require the QuickBooks Customer/Job (property) field on Owner Utilities Paid and Supplies &amp; materials purchases; until then the property is read from the memo.</td></tr>
           <tr><td>Lease renewals</td><td>AppFolio tracks renewals, but the connector's lease records don't hold every 2026 expiration (it found 14; its renewal list shows only renewed leases, so 100% every month)</td><td>Entered in the workbook</td><td>Schedule AppFolio's Lease Expiration / Renewal Summary report to email or OneDrive monthly; the Monday refresh can then read it.</td></tr>
           <tr><td>Tenant and prospect response time</td><td>AppFolio keeps when a request was created and its latest assignment, not the first reply, and has no first-contact time on guest cards</td><td>Entered in the workbook</td><td>Use AppFolio's Work Order or Guest Card response reports if your plan has them, or keep entering.</td></tr>
+          <tr><td>Google review ratings</td><td>Google Business Profile through Windsor.ai: all-time star rating and review count for the Loganville (Georgia), Chattanooga and Raleigh profiles</td><td>Automatic, every morning</td><td>Nothing. Charlotte, Macon and Fort Valley have no Google profile connected.</td></tr>
           <tr><td>Leads to showings, showings to applications</td><td>Tenant Turner: showings that actually happened (self-access code sent, or confirmed and in the past; no-shows and cancellations left out) / new leads, by month. Showings to applications: AppFolio applications received / those same Tenant Turner showings</td><td>Automatic: Tenant Turner every morning, AppFolio applications every Monday</td><td>Nothing.</td></tr>
           <tr><td>Mid-lease inspection and Tenant Turner check compliance</td><td>AppFolio work orders: of the inspection or Tenant Turner work orders created that month, the share completed</td><td>Automatic, every Monday</td><td>Close the work order in AppFolio when the inspection or check is done, or it counts as missed.</td></tr>
           <tr><td>Application processing time, lease renewals, owner debt, credits issued, response times</td><td>AppFolio keeps no approval date on applications, no month-end owner balances, and no first-reply times in the data the connector reads</td><td>Enter numbers tab</td><td>Schedule the matching AppFolio reports to OneDrive (Rental Applications, Lease Expiration / Renewal Summary, Owner balances); the Monday refresh can then read them.</td></tr>
@@ -578,13 +581,14 @@
 </div>
 
 </div>
-<script src="dash.js?v=202611182022"></script>
-<script src="sc.js?v=202611182022"></script>
-<script src="app.js?v=202611182022"></script>
-<script src="ramp.js?v=202611182022"></script>
-<script src="companies.js?v=202611182022"></script>
-<script src="owners.js?v=202611182022"></script>
-<script src="entry.js?v=202611182022"></script>
-<script src="main.js?v=202611182022"></script>
+<script src="dash.js?v=202611182039"></script>
+<script src="sc.js?v=202611182039"></script>
+<script src="app.js?v=202611182039"></script>
+<script src="ramp.js?v=202611182039"></script>
+<script src="companies.js?v=202611182039"></script>
+<script src="owners.js?v=202611182039"></script>
+<script src="reviews.js?v=202611182039"></script>
+<script src="entry.js?v=202611182039"></script>
+<script src="main.js?v=202611182039"></script>
 </body>
 </html>

@@ -136,3 +136,12 @@ body { padding: 12px; min-height: 100vh; box-sizing: border-box; }
 .mp-entry-auto { color: var(--color-ok); }
 tr.mp-entry-sec td { background: var(--m-navy); color: var(--m-beige); font-weight: 600; letter-spacing: 0.04em; }
 .mp-save { background: var(--m-beige); color: var(--m-midnight); border-color: var(--m-beige); font-weight: 600; }
+.mp-reviews { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); align-items: center; margin: 4px 0 10px; }
+.mp-reviews:empty { display: none; }
+.mp-review { display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 12px; border: 1px solid var(--color-border-line); border-radius: 999px; background: var(--color-panel); color: var(--color-fg); text-decoration: none; font-size: 13px; }
+.mp-review:hover { border-color: var(--color-fg-muted); }
+.mp-review-name { color: var(--color-fg-muted); }
+.mp-review-val { font-weight: 600; font-size: 16px; }
+.mp-review-stars { color: #d9a400; letter-spacing: 1px; }
+.mp-review-low .mp-review-val { color: #b4532a; }
+.mp-review-n, .mp-review-asof { color: var(--color-fg-muted); font-size: 12px; }
