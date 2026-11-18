@@ -26,12 +26,20 @@
     if (tt && sys && tt.rows && sys.rows) {
       const rows = sys.rows.map((r) => Object.assign({}, r));
       const at = new Map(rows.map((r, i) => [r.ID + '|' + r.MARKET + '|' + (+r.MONTH), i]));
+      const put = (id, market, mo, val, note, src) => {
+        const k = id + '|' + market + '|' + mo, v = String(Math.round(val * 10000) / 10000);
+        if (at.has(k)) Object.assign(rows[at.get(k)], { VALUE: v, NOTE: note, SOURCE: src });
+        else { at.set(k, rows.length); rows.push({ ID: id, MARKET: market, MONTH: String(mo), VALUE: v, NOTE: note, SOURCE: src }); }
+      };
+      const ST = { GA: 'Georgia', TN: 'Tennessee', NC: 'North Carolina' }, apps = new Map();
+      const af = data.find((d) => d.id === 'af_funnel');
+      if (af && af.rows) af.rows.forEach((r) => { const k = ST[String(r.GROUP).slice(0, 2)] + '|' + r.MONTH; apps.set(k, (apps.get(k) || 0) + (+r.APPS || 0)); });
       tt.rows.forEach((t) => {
         const mo = +String(t.MONTH).slice(5, 7), yr = String(t.MONTH).slice(0, 4), leads = +t.LEADS, done = +t.SHOWINGS_DONE;
-        if (yr !== '2026' || !leads) return;
-        const k = 'r24|' + t.MARKET + '|' + mo, v = String(Math.round(done / leads * 10000) / 10000);
-        if (at.has(k)) rows[at.get(k)].VALUE = v;
-        else rows.push({ ID: 'r24', MARKET: t.MARKET, MONTH: String(mo), VALUE: v, NOTE: 'Tenant Turner showings that happened / new leads', SOURCE: 'Tenant Turner' });
+        if (yr !== '2026') return;
+        if (leads) put('r24', t.MARKET, mo, done / leads, 'Tenant Turner showings that happened / new leads', 'Tenant Turner');
+        const a = apps.get(t.MARKET + '|' + t.MONTH);
+        if (done && a !== undefined) put('r25', t.MARKET, mo, a / done, 'AppFolio applications / Tenant Turner showings that happened', 'AppFolio + Tenant Turner');
       });
       sys.rows = rows;
     }
