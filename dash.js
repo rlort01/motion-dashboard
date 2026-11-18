@@ -1,6 +1,8 @@
 // Stand-in for the Claude artifact runtime: the same dash.calc / loader / draw / data /
 // params API the page scripts were written against, reading datasets from Supabase.
 (function () {
+  window.mpErrors = [];
+  window.addEventListener('error', (e) => window.mpErrors.push('page: ' + (e.message || '') + ' @' + (e.filename || '').split('/').pop() + ':' + e.lineno));
   const loaders = new Map(), calcs = new Map(), draws = new Map();
   const raw = new Map();      // id -> { status, data, error }
   let cache = new Map();      // computed results for loaders and calcs
@@ -30,7 +32,7 @@
       if (bad) out = { status: bad.status === 'error' ? 'error' : 'loading', error: bad.error };
       else {
         try { out = { status: 'ok', data: toRows(c.fn(...ins.map((r) => r.data))) }; }
-        catch (e) { console.error('calc ' + id, e); out = { status: 'error', error: String(e) }; }
+        catch (e) { console.error('calc ' + id, e); (window.mpErrors = window.mpErrors || []).push('calc ' + id + ': ' + String(e && e.stack || e).slice(0, 300)); out = { status: 'error', error: String(e) }; }
       }
       seen.delete(id);
     } else {
@@ -50,7 +52,7 @@
     const fn = draws.get(name);
     if (!fn) return;
     document.querySelectorAll('[data-draw="' + name + '"]').forEach((el) => {
-      try { fn(el); } catch (e) { console.error('draw ' + name, e); }
+      try { fn(el); } catch (e) { console.error('draw ' + name, e); (window.mpErrors = window.mpErrors || []).push('draw ' + name + ': ' + String(e && e.stack || e).slice(0, 300)); }
     });
   };
   let scheduled = false;

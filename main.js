@@ -39,11 +39,32 @@
       dash._setDataset(d.id, 'ok', d.rows);
     });
     if (window.mpEntry) window.mpEntry.load();
+    if (!window.mpDiagSent) { window.mpDiagSent = true; setTimeout(sendDiag, 4000); }
     updated = new Date(d3.max(data, (d) => new Date(d.updated_at)));
     dash._redraw();
   };
 
   window.mpReloadData = () => load();
+  // One small health report per visit, so display problems on other computers can be diagnosed.
+  const sendDiag = async () => {
+    try {
+      const q = (s) => Array.from(document.querySelectorAll(s));
+      const st = (id) => dash.data(id).status;
+      const detail = {
+        ua: navigator.userAgent, w: innerWidth, h: innerHeight, dpr: devicePixelRatio, zoom: Math.round(outerWidth / innerWidth * 100) / 100,
+        params: dash.params(), datasets: dash._ids().length, sc2026: st('sc2026'), scTable: st('scTable'), scMarket: st('scMarket'),
+        scRows: (dash.data('scTable').data || []).length,
+        sections: q('tbody[data-draw=scSection]').map((t) => t.children.length),
+        sectionBoxes: q('tbody[data-draw=scSection]').map((t) => Math.round(t.getBoundingClientRect().height)),
+        tableOverflow: q('#scorecard .mp-wrap').map((w) => w.scrollWidth - w.clientWidth),
+        tiles: q('#scorecard .mp-big').map((e) => e.textContent.slice(0, 20)),
+        tileOverflow: q('.mp-big').filter((e) => e.offsetParent && e.scrollWidth > e.clientWidth + 1).length,
+        scorecardHidden: document.getElementById('scorecard').hidden, version: (document.querySelector('script[src^="dash.js"]') || {}).src,
+        errors: (window.mpErrors || []).slice(0, 15)
+      };
+      await sb.from('client_diagnostics').insert({ kind: 'load', detail });
+    } catch (e) { /* diagnostics must never break the page */ }
+  };
   const showApp = () => { login.hidden = true; app.hidden = false; load(); };
   const showLogin = (text) => { app.hidden = true; login.hidden = false; msg.textContent = text || ''; };
 
