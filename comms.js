@@ -16,19 +16,34 @@
   const isBiz = (s) => { const p = Object.fromEntries(ET.formatToParts(new Date(s)).map((x) => [x.type, x.value])); const h = +p.hour % 24; return !['Sat', 'Sun'].includes(p.weekday) && h >= 8 && h < 18; };
 
   const calls = () => (rowsOf('comm_calls') || []).filter((r) => inPeriod(r.START));
-  const mails = () => (rowsOf('resp_email') || []).filter((r) => inPeriod(r.RECEIVED));
+  // Business hours between two times: Mon-Fri 8:00-18:00 Eastern.
+  const bizH = (a, b) => {
+    let t = +new Date(a); const end = +new Date(b); let ms = 0;
+    while (t < end) { const n = Math.min(end, t + 15 * 60000); if (isBiz(t)) ms += n - t; t = n; }
+    return ms / 3600000;
+  };
+  // A reply counts from Outlook (same email thread) or from AppFolio (checked nightly), whichever came first.
+  const norm = (r) => {
+    if (r._n) return r;
+    const o = r.REPLIED ? +new Date(r.REPLIED) : null, a = r.AF_REPLIED ? +new Date(r.AF_REPLIED) : null;
+    const useA = a && (!o || a < o);
+    r._rep = useA ? r.AF_REPLIED : r.REPLIED; r._by = useA ? r.AF_REPLIED_BY : r.REPLIED_BY; r._via = r._rep ? (useA ? 'AppFolio' : 'Outlook') : null;
+    r._bh = r._rep ? (useA ? bizH(r.RECEIVED, r._rep) : +r.BIZ_HOURS) : bizH(r.RECEIVED, Date.now());
+    r._n = true; return r;
+  };
+  const mails = () => (rowsOf('resp_email') || []).filter((r) => inPeriod(r.RECEIVED)).map(norm);
 
   const sum = () => {
     const c = calls(), inn = c.filter((r) => r.DIR === 'in'), out = c.filter((r) => r.DIR === 'out');
     const ans = inn.filter((r) => r.ANSWERED), miss = inn.filter((r) => !r.ANSWERED), missBiz = miss.filter((r) => isBiz(r.START));
     const back = miss.filter((r) => r.CALLBACK_MIN !== null || r.CALLED_AGAIN);
-    const m = mails(), rep = m.filter((r) => r.REPLIED);
+    const m = mails(), rep = m.filter((r) => r._rep);
     return {
       inN: inn.length, ans: ans.length, miss: miss.length, missBiz: missBiz.length, back: back.length, notBack: miss.length - back.length,
       cbMed: med(miss.filter((r) => r.CALLBACK_MIN !== null).map((r) => +r.CALLBACK_MIN)),
       wait: med(ans.filter((r) => r.LINE && r.WAIT_S !== null).map((r) => +r.WAIT_S)),
       outN: out.length, talkHr: d3.sum(c, (r) => +r.TALK_S || 0) / 3600,
-      mN: m.length, mRep: rep.length, mMed: med(rep.map((r) => +r.BIZ_HOURS)), mWait: m.length - rep.length,
+      mN: m.length, mRep: rep.length, mMed: med(rep.map((r) => r._bh)), mAf: rep.filter((r) => r._via === 'AppFolio').length, mWait: m.length - rep.length,
     };
   };
   const tile = (name, f) => dash.draw(name, (el) => { el.textContent = rowsOf('comm_calls') || rowsOf('resp_email') ? f(sum()) : '—'; });
@@ -40,7 +55,7 @@
   tile('cmOut', (s) => String(s.outN));
   tile('cmOutN', (s) => s.talkHr.toFixed(1) + ' hours on the phone, in and out');
   tile('cmMail', (s) => fmtHr(s.mMed));
-  tile('cmMailN', (s) => s.mN + ' owner/tenant emails · ' + s.mWait + ' with no Outlook reply');
+  tile('cmMailN', (s) => s.mN + ' owner/tenant emails · ' + s.mAf + ' answered in AppFolio · ' + s.mWait + ' with no reply found');
 
   // Per-person table.
   dash.draw('cmPeople', (tb) => {
@@ -56,7 +71,7 @@
       if (r.DIR === 'in' && !r.ANSWERED && r.CALLED_BACK_BY) { const x = p(r.CALLED_BACK_BY); x.cbN++; x.cb.push(+r.CALLBACK_MIN); }
     });
     m.forEach((r) => { const x = p(r.NAME); x.mail++; });
-    m.filter((r) => r.REPLIED && r.REPLIED_BY).forEach((r) => { const x = p(r.REPLIED_BY); x.rep++; x.repH.push(+r.BIZ_HOURS); });
+    m.filter((r) => r._rep && r._by).forEach((r) => { const x = p(r._by); x.rep++; x.repH.push(r._bh); });
     const list = Array.from(P.values()).filter((x) => x.name && !/^Motion PMG\b/.test(x.name)).sort((a, b) => (b.ans + b.out + b.mail) - (a.ans + a.out + a.mail));
     if (!list.length) { const tr = document.createElement('tr'); td(tr, 'No calls or emails in this period.'); tb.appendChild(tr); return; }
     list.forEach((x) => {
@@ -87,6 +102,19 @@
     });
   });
 
+  // Owner/tenant emails with no reply found in Outlook or AppFolio, longest wait first.
+  dash.draw('cmMailWait', (tb) => {
+    tb.replaceChildren();
+    const list = mails().filter((r) => !r._rep).sort((a, b) => b._bh - a._bh);
+    if (!list.length) { const tr = document.createElement('tr'); td(tr, 'Every owner and tenant email in this period has a reply.'); tb.appendChild(tr); return; }
+    list.forEach((r) => {
+      const tr = document.createElement('tr'); if (r._bh > 10) tr.className = 'mp-attn';
+      td(tr, when(r.RECEIVED)); td(tr, r.NAME); td(tr, r.ROLE); td(tr, r.MARKET); td(tr, fmtHr(r._bh), 'mp-num');
+      td(tr, r.AF_CHECKED ? 'Checked ' + d3.timeFormat('%b %-d')(new Date(r.AF_CHECKED)) + ': no reply found' : 'Not checked yet');
+      tb.appendChild(tr);
+    });
+  });
+
   // Weekly trend (last 8 weeks, Monday start).
   dash.draw('cmWeeks', (tb) => {
     tb.replaceChildren();
@@ -99,7 +127,7 @@
       if (r.DIR === 'in') { x.inN++; if (r.ANSWERED) { x.ans++; if (r.LINE && r.WAIT_S !== null) x.wait.push(+r.WAIT_S); } else { x.miss++; if (r.CALLBACK_MIN === null && !r.CALLED_AGAIN) x.notBack++; } }
       else x.out++;
     });
-    m.forEach((r) => { const x = w(r.RECEIVED); x.mail++; if (r.REPLIED) x.repH.push(+r.BIZ_HOURS); });
+    m.map(norm).forEach((r) => { const x = w(r.RECEIVED); x.mail++; if (r._rep) x.repH.push(r._bh); });
     Array.from(W.values()).sort((a, b) => b.k - a.k).slice(0, 8).forEach((x) => {
       const tr = document.createElement('tr');
       td(tr, 'Week of ' + d3.timeFormat('%b %-d')(new Date(x.k)));
@@ -118,6 +146,6 @@
   document.querySelectorAll('[data-cmdays]').forEach((b) => b.addEventListener('click', () => {
     view.days = +b.getAttribute('data-cmdays');
     document.querySelectorAll('[data-cmdays]').forEach((x) => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
-    ['cmIn', 'cmInN', 'cmMiss', 'cmMissN', 'cmWait', 'cmOut', 'cmOutN', 'cmMail', 'cmMailN', 'cmPeople', 'cmMissed'].forEach((n) => dash.draw(n));
+    ['cmIn', 'cmInN', 'cmMiss', 'cmMissN', 'cmWait', 'cmOut', 'cmOutN', 'cmMail', 'cmMailN', 'cmPeople', 'cmMissed', 'cmMailWait'].forEach((n) => dash.draw(n));
   }));
 })();

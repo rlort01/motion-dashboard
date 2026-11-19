@@ -7,7 +7,7 @@
 <title>Motion Dashboard</title>
 <link rel="icon" href="rings.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Source+Sans+3:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=202611182339">
+<link rel="stylesheet" href="styles.css?v=202611190141">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 </head>
@@ -400,10 +400,10 @@
       <div class="mp-card"><h3>Unanswered calls</h3><div class="mp-big" data-source="comm_calls" data-draw="cmMiss">—</div><div class="mp-meta" data-draw="cmMissN">—</div></div>
       <div class="mp-card"><h3>Main-line wait to reach a person</h3><div class="mp-big" data-source="comm_calls" data-draw="cmWait">—</div><div class="mp-meta">From the call coming in to someone picking up (typical)</div></div>
       <div class="mp-card"><h3>Outgoing calls</h3><div class="mp-big" data-source="comm_calls" data-draw="cmOut">—</div><div class="mp-meta" data-draw="cmOutN">—</div></div>
-      <div class="mp-card"><h3>Email first reply (Outlook)</h3><div class="mp-big" data-source="resp_email" data-draw="cmMail">—</div><div class="mp-meta" data-draw="cmMailN">—</div></div>
+      <div class="mp-card"><h3>Email first reply</h3><div class="mp-big" data-source="resp_email" data-draw="cmMail">—</div><div class="mp-meta" data-draw="cmMailN">—</div></div>
     </div>
     <h2 class="mp-h2">By person</h2>
-    <p class="mp-note">Answered: outside calls they picked up (main line or direct). Missed: calls to their direct number nobody picked up. Callbacks: unanswered calls they returned within 3 days, and how long it took. Email replies are from Outlook only; replies sent from AppFolio aren't counted yet.</p>
+    <p class="mp-note">Answered: outside calls they picked up (main line or direct). Missed: calls to their direct number nobody picked up. Callbacks: unanswered calls they returned within 3 days, and how long it took. Email replies count from Outlook (same thread) or AppFolio (email, text or chat to that person), whichever came first, in business hours (Mon–Fri, 8 AM–6 PM Eastern).</p>
     <div class="mp-wrap mp-scroll">
       <table class="mp-table" data-source="comm_calls">
         <thead><tr><th>Team member</th><th class="mp-num">Calls answered</th><th class="mp-num">Missed (direct)</th><th class="mp-num">Calls made</th><th class="mp-num">Phone hours</th><th class="mp-num">Callbacks · typical time</th><th class="mp-num">Owner/tenant emails in</th><th class="mp-num">Emails replied · typical time</th></tr></thead>
@@ -416,6 +416,14 @@
       <table class="mp-table" data-source="comm_calls">
         <thead><tr><th>When</th><th>Line</th><th>Rang</th><th>Follow-up</th></tr></thead>
         <tbody data-draw="cmMissed"></tbody>
+      </table>
+    </div>
+    <h2 class="mp-h2">Owner and tenant emails still waiting</h2>
+    <p class="mp-note">No reply found in Outlook or AppFolio. AppFolio is checked each night; red means more than one business day (10 hours). Some may be "thanks" notes that don't need an answer.</p>
+    <div class="mp-wrap mp-scroll">
+      <table class="mp-table" data-source="resp_email">
+        <thead><tr><th>Received</th><th>Mailbox</th><th>From</th><th>Market</th><th class="mp-num">Waiting (business hours)</th><th>AppFolio check</th></tr></thead>
+        <tbody data-draw="cmMailWait"></tbody>
       </table>
     </div>
     <h2 class="mp-h2">Week by week</h2>
@@ -465,7 +473,7 @@
           <tr><td>Utility and materials bill-back check</td><td>Ramp (utility payments and materials purchases) against AppFolio bills to the property</td><td>Automatic, every Monday</td><td>In Ramp, require the QuickBooks Customer/Job (property) field on Owner Utilities Paid and Supplies &amp; materials purchases; until then the property is read from the memo.</td></tr>
           <tr><td>Lease renewals</td><td>AppFolio tracks renewals, but the connector's lease records don't hold every 2026 expiration (it found 14; its renewal list shows only renewed leases, so 100% every month)</td><td>Entered in the workbook</td><td>Schedule AppFolio's Lease Expiration / Renewal Summary report to email or OneDrive monthly; the Monday refresh can then read it.</td></tr>
           <tr><td>Tenant and prospect response time</td><td>AppFolio keeps when a request was created and its latest assignment, not the first reply, and has no first-contact time on guest cards</td><td>Entered in the workbook</td><td>Use AppFolio's Work Order or Guest Card response reports if your plan has them, or keep entering.</td></tr>
-          <tr><td>Communications tab</td><td>Microsoft 365 (read-only app "Motion Dashboard"): Teams Phone call records, and Outlook message times for emails from current AppFolio owners and tenants. No email text, addresses or phone numbers are stored</td><td>Automatic, every night</td><td>Nothing. Replies sent from AppFolio aren't counted yet.</td></tr>
+          <tr><td>Communications tab</td><td>Microsoft 365 (read-only app "Motion Dashboard"): Teams Phone call records, and Outlook message times for emails from current AppFolio owners and tenants. No email text, addresses or phone numbers are shown. Emails with no Outlook reply are checked against the person's AppFolio history each night</td><td>Automatic, every night</td><td>Nothing.</td></tr>
           <tr><td>Google review ratings</td><td>Google Business Profile through Windsor.ai: all-time star rating and review count for the Loganville (Georgia), Chattanooga and Raleigh profiles</td><td>Automatic, every morning</td><td>Nothing. Charlotte, Macon and Fort Valley have no Google profile connected.</td></tr>
           <tr><td>Leads to showings, showings to applications</td><td>Tenant Turner: showings that actually happened (self-access code sent, or confirmed and in the past; no-shows and cancellations left out) / new leads, by month. Showings to applications: AppFolio applications received / those same Tenant Turner showings</td><td>Automatic: Tenant Turner every morning, AppFolio applications every Monday</td><td>Nothing.</td></tr>
           <tr><td>Mid-lease inspection and Tenant Turner check compliance</td><td>AppFolio work orders: of the inspection or Tenant Turner work orders created that month, the share completed</td><td>Automatic, every Monday</td><td>Close the work order in AppFolio when the inspection or check is done, or it counts as missed.</td></tr>
@@ -621,15 +629,15 @@
 </div>
 
 </div>
-<script src="dash.js?v=202611182339"></script>
-<script src="sc.js?v=202611182339"></script>
-<script src="app.js?v=202611182339"></script>
-<script src="ramp.js?v=202611182339"></script>
-<script src="companies.js?v=202611182339"></script>
-<script src="owners.js?v=202611182339"></script>
-<script src="reviews.js?v=202611182339"></script>
-<script src="comms.js?v=202611182339"></script>
-<script src="entry.js?v=202611182339"></script>
-<script src="main.js?v=202611182339"></script>
+<script src="dash.js?v=202611190141"></script>
+<script src="sc.js?v=202611190141"></script>
+<script src="app.js?v=202611190141"></script>
+<script src="ramp.js?v=202611190141"></script>
+<script src="companies.js?v=202611190141"></script>
+<script src="owners.js?v=202611190141"></script>
+<script src="reviews.js?v=202611190141"></script>
+<script src="comms.js?v=202611190141"></script>
+<script src="entry.js?v=202611190141"></script>
+<script src="main.js?v=202611190141"></script>
 </body>
 </html>
