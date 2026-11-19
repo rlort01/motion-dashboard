@@ -138,11 +138,28 @@
     }
   });
 
+  // Request type for a work order: inspections (mid-lease, move-in/out, other), unit turns, recurring services and
+  // repairs, from the AppFolio work-order list (wo_types) with a description fallback for brand-new work orders.
+  const woKind = (wo, desc, types) => {
+    const t = types.get(wo) || {};
+    let insp = t.INSP || '';
+    if (!insp && /inspect/i.test(desc || '')) insp = /mid.?lease|quarter|semi|annual|periodic/i.test(desc) ? 'Mid-lease' : /move.?in/i.test(desc) ? 'Move-in' : /move.?out/i.test(desc) ? 'Move-out' : 'Other inspection';
+    if (insp === 'Mid-lease') return 'Mid-lease inspection';
+    if (insp === 'Move-in' || insp === 'Move-out') return 'Move-in/out inspection';
+    if (insp) return 'Other inspection';
+    if (t.WTYPE === 'unit_turn' || /\bturn\b|make.?ready/i.test(desc || '')) return 'Unit turn';
+    if (t.WTYPE === 'recurring_work_order') return 'Recurring service';
+    return 'Repair';
+  };
+  window.mpWoKind = woKind;
+  const woTypes = () => { const d = dash.data('wo_types'); return new Map(d.status === 'ok' ? d.data.map((r) => [r.WO, r]) : []); };
+
   dash.calc('board', {
     title: 'Open AppFolio work orders with their Jobber job',
     description: 'Each open AppFolio work order, joined to an active Jobber job by work order number in the job title, or else by street address.',
-    inputs: ['af_wo', 'jobber_jobs'],
-    fn: (afWo, jobs) => {
+    inputs: ['af_wo', 'jobber_jobs', 'wo_types'],
+    fn: (afWo, jobs, wt) => {
+      const types = new Map((wt || []).map((r) => [r.WO, r]));
       const p = dash.params();
       const groups = { Combined: ['GA-ATL', 'GA-MAC', 'TN-CHA', 'NC-CLT', 'NC-RAL'], Georgia: ['GA-ATL', 'GA-MAC'], Tennessee: ['TN-CHA'], 'North Carolina': ['NC-CLT', 'NC-RAL'] }[p.market] || ['GA-ATL', 'GA-MAC', 'TN-CHA', 'NC-CLT', 'NC-RAL'];
       const ak = (s) => { const t = String(s || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean); return t.length >= 2 ? t[0] + ' ' + t[1] : null; };
@@ -154,6 +171,7 @@
         const jj = j || ja;
         return {
           wo: w.WO, group: w.GROUP, address: w.ADDRESS, desc: w.DESC, status: w.STATUS, priority: w.PRIORITY,
+          kind: woKind(w.WO, w.DESC, types), issue: (types.get(w.WO) || {}).ISSUE || '',
           days: +w.DAYS, vendor: w.VENDOR,
           jobberJob: jj ? jj.job : null, jobberStatus: jj ? jj.status : null, jobberDate: jj ? jj.start : null,
           jobberUrl: jj ? jj.url : null, match: j ? 'wo' : ja ? 'address' : null
@@ -274,10 +292,11 @@
     document.querySelectorAll('[data-section]').forEach((s) => { s.hidden = s.id !== id; });
     document.querySelectorAll('.mp-tab').forEach((b) => b.setAttribute('aria-selected', b.dataset.tab === id ? 'true' : 'false'));
     dash.setLink(id);
+    window.dispatchEvent(new CustomEvent('mp-tab', { detail: id }));
   };
   document.querySelectorAll('.mp-tab').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
   const h = (location.hash || '').slice(1);
-  if (['scorecard', 'workorders', 'billing', 'comms'].includes(h)) showTab(h);
+  if (['scorecard', 'workorders', 'billing', 'comms', 'portfolio', 'map'].includes(h)) showTab(h);
 
   window.mpView = { wo: 'all', inv: 'attention', gap: 'V' };
   const chipGroup = (attr, key, draw) => {
@@ -288,6 +307,7 @@
     }));
   };
   chipGroup('woview', 'wo', 'boardRows');
+  chipGroup('wotype', 'wotype', 'boardRows');
   chipGroup('invview', 'inv', 'invRows');
   chipGroup('gapview', 'gap', 'gapTable');
 
@@ -423,11 +443,13 @@
     const d = dash.data('board');
     tb.replaceChildren();
     if (d.status !== 'ok') return;
-    const v = window.mpView.wo, owners = ownerSet();
-    d.data.filter((r) => v === 'all' || (v === 'linked' && r.jobberJob) || (v === 'nojob' && !r.jobberJob) || (v === 'old' && r.days >= 30) || (v === 'owner' && isOwnerWo(r, owners))).forEach((r) => {
+    const v = window.mpView.wo, owners = ownerSet(), k = window.mpView.wotype || 'all';
+    const kindOk = (r) => k === 'all' || (k === 'critical' ? r.priority === 'Urgent' && !/inspection/i.test(r.kind) : k === 'inspections' ? /inspection/i.test(r.kind) : r.kind === k);
+    d.data.filter(kindOk).filter((r) => v === 'all' || (v === 'linked' && r.jobberJob) || (v === 'nojob' && !r.jobberJob) || (v === 'old' && r.days >= 30) || (v === 'owner' && isOwnerWo(r, owners))).forEach((r) => {
       const tr = document.createElement('tr'); tr.setAttribute('data-key', r.wo);
       if (isOwnerWo(r, owners)) { tr.className = 'mp-owner'; tr.title = 'The owner is handling this work order'; }
-      td(tr, '#' + r.wo); td(tr, r.group); td(tr, r.address); td(tr, r.desc);
+      td(tr, '#' + r.wo); td(tr, r.group); td(tr, r.address);
+      const rc = td(tr, r.desc); const kb = document.createElement('span'); kb.className = 'mp-pill mp-kind' + (r.priority === 'Urgent' && !/inspection/i.test(r.kind) ? ' mp-bad' : ''); kb.textContent = (r.priority === 'Urgent' && !/inspection/i.test(r.kind) ? 'Critical · ' : '') + r.kind; rc.prepend(kb, ' ');
       td(tr, r.status + (r.priority === 'Urgent' ? ' · Urgent' : ''));
       const dc = td(tr, r.days, 'mp-num'); if (r.days >= 30) dc.style.color = 'var(--color-bad)';
       td(tr, r.vendor);
@@ -437,6 +459,36 @@
       tb.appendChild(tr);
     });
   });
+
+  // Work orders by request type: open now (from the board) and the last 30/90 days (from the AppFolio list).
+  dash.draw('woKinds', (tb) => {
+    const b = dash.data('board'), t = dash.data('wo_types');
+    tb.replaceChildren();
+    if (b.status !== 'ok') return;
+    const types = woTypes(), now = Date.now(), DAY = 86400000;
+    const K = ['Repair', 'Mid-lease inspection', 'Move-in/out inspection', 'Other inspection', 'Unit turn', 'Recurring service'];
+    const S = new Map(K.map((k) => [k, { k, open: 0, crit: 0, old: 0, made: 0, done: 0, days: [] }]));
+    b.data.forEach((r) => { const s = S.get(r.kind); if (!s) return; s.open++; if (r.priority === 'Urgent' && !/inspection/i.test(r.kind)) s.crit++; if (r.days >= 30) s.old++; });
+    if (t.status === 'ok') t.data.forEach((r) => {
+      const s = S.get(woKind(r.WO, '', types)); if (!s || /cancel/i.test(r.STATUS)) return;
+      const c = Date.parse(r.CREATED), f = r.COMPLETED ? Date.parse(r.COMPLETED) : null;
+      if (now - c <= 30 * DAY) s.made++;
+      if (f && now - f <= 30 * DAY) s.done++;
+      if (f && now - f <= 90 * DAY) s.days.push((f - c) / DAY);
+    });
+    K.forEach((k) => {
+      const s = S.get(k), tr = document.createElement('tr');
+      td(tr, k); td(tr, s.open, 'mp-num'); const cc = td(tr, s.crit || '', 'mp-num'); if (s.crit) cc.style.color = 'var(--color-bad)';
+      td(tr, s.old || '', 'mp-num'); td(tr, s.made, 'mp-num'); td(tr, s.done, 'mp-num');
+      td(tr, s.days.length ? d3.median(s.days).toFixed(0) + ' days' : '—', 'mp-num');
+      tr.style.cursor = 'pointer'; tr.title = 'Show these on the board below';
+      tr.addEventListener('click', () => { const btn = document.querySelector('[data-wotype="' + k + '"]'); if (btn) btn.click(); document.getElementById('board').scrollIntoView({ behavior: 'smooth' }); });
+      tb.appendChild(tr);
+    });
+  });
+  dash.draw('bCrit', (el) => { const b = dash.data('board'); el.textContent = b.status === 'ok' ? b.data.filter((r) => r.priority === 'Urgent' && !/inspection/i.test(r.kind)).length : '—'; });
+  dash.draw('bInsp', (el) => { const b = dash.data('board'); el.textContent = b.status === 'ok' ? b.data.filter((r) => /inspection/i.test(r.kind)).length : '—'; });
+  dash.draw('bInspN', (el) => { const b = dash.data('board'); if (b.status !== 'ok') return; const m = b.data.filter((r) => r.kind === 'Mid-lease inspection').length; el.textContent = m + ' mid-lease · ' + b.data.filter((r) => r.kind === 'Move-in/out inspection').length + ' move-in/out'; });
 
   dash.draw('jobberOnlyRows', (tb) => {
     const d = dash.data('jobberOnly');

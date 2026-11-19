@@ -7,8 +7,10 @@
 <title>Motion Dashboard</title>
 <link rel="icon" href="rings.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Source+Sans+3:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=202611190216">
+<link rel="stylesheet" href="styles.css?v=202611191447">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 </head>
 <body>
@@ -60,6 +62,8 @@
     <button class="mp-tab" role="tab" data-tab="workorders" aria-selected="false">Work orders: AppFolio + Jobber</button>
     <button class="mp-tab" role="tab" data-tab="billing" aria-selected="false">Billing check</button>
     <button class="mp-tab" role="tab" data-tab="utilreview" aria-selected="false">Utilities to review</button>
+    <button class="mp-tab" role="tab" data-tab="portfolio" aria-selected="false">Portfolio</button>
+    <button class="mp-tab" role="tab" data-tab="map" aria-selected="false">Map</button>
     <button class="mp-tab" role="tab" data-tab="comms" aria-selected="false">Communications</button>
     <button class="mp-tab" role="tab" data-tab="entry" aria-selected="false">Enter numbers</button>
     <button class="mp-tab" role="tab" data-tab="sources" aria-selected="false">Data sources &amp; checks</button>
@@ -183,6 +187,26 @@
       <div class="mp-card"><h3>Linked to a Jobber job</h3><div class="mp-big" data-source="boardSum" data-field="linked" data-row="0" data-draw="bLinked">—</div><div class="mp-meta">Active Jobber jobs</div></div>
       <div class="mp-card"><h3>Open 30+ days with no Jobber job</h3><div class="mp-big" data-source="boardSum" data-field="stale" data-row="0" data-draw="bStale">—</div><div class="mp-meta">Owner-handled work orders not counted</div></div>
       <div class="mp-card"><h3>Jobber jobs late or needing action</h3><div class="mp-big" data-source="boardSum" data-field="jobberAttn" data-row="0" data-draw="bAttn">—</div><div class="mp-meta">Jobber status late or action required</div></div>
+      <div class="mp-card"><h3>Critical work orders open</h3><div class="mp-big" data-source="board" data-draw="bCrit" style="color: var(--color-bad)">—</div><div class="mp-meta">Marked Urgent in AppFolio, inspections excluded</div></div>
+      <div class="mp-card"><h3>Inspections open</h3><div class="mp-big" data-source="board" data-draw="bInsp">—</div><div class="mp-meta" data-draw="bInspN">—</div></div>
+    </div>
+    <h2 class="mp-h2">By request type</h2>
+    <p class="mp-note">Inspections are kept apart from repairs so they don't hide critical work. Critical means AppFolio priority Urgent. Click a row to filter the board. Completion time is the typical days from created to completed for work orders finished in the last 90 days.</p>
+    <div class="mp-wrap">
+      <table class="mp-table" data-source="board">
+        <thead><tr><th>Request type</th><th class="mp-num">Open</th><th class="mp-num">Critical open</th><th class="mp-num">Open 30+ days</th><th class="mp-num">Created, last 30 days</th><th class="mp-num">Completed, last 30 days</th><th class="mp-num">Typical days to complete</th></tr></thead>
+        <tbody data-draw="woKinds"></tbody>
+      </table>
+    </div>
+    <div class="mp-chips" role="group" aria-label="Request type" style="margin-top: var(--cds-gap-md)">
+      <button class="mp-chip" data-wotype="all" aria-pressed="true">All types</button>
+      <button class="mp-chip" data-wotype="critical" aria-pressed="false">Critical</button>
+      <button class="mp-chip" data-wotype="Repair" aria-pressed="false">Repairs</button>
+      <button class="mp-chip" data-wotype="inspections" aria-pressed="false">All inspections</button>
+      <button class="mp-chip" data-wotype="Mid-lease inspection" aria-pressed="false">Mid-lease</button>
+      <button class="mp-chip" data-wotype="Move-in/out inspection" aria-pressed="false">Move-in/out</button>
+      <button class="mp-chip" data-wotype="Unit turn" aria-pressed="false">Unit turns</button>
+      <button class="mp-chip" data-wotype="Recurring service" aria-pressed="false">Recurring</button>
     </div>
     <div class="mp-chips" id="wo-view" role="group" aria-label="Show">
       <button class="mp-chip" data-woview="all" aria-pressed="true">All open</button>
@@ -389,6 +413,60 @@
     </div>
   </section>
 
+  <section id="portfolio" data-section hidden>
+    <p class="mp-note">Is the portfolio growing, are owners staying, and how fast do empty units fill? From AppFolio each morning. Follows the market filter (Georgia here means properties in Georgia, including the Chattanooga-area towns).</p>
+    <h2 class="mp-h2">Owner retention</h2>
+    <div class="mp-grid" style="margin-bottom: var(--cds-gap-md)">
+      <div class="mp-card"><h3>Rental doors managed now</h3><div class="mp-big" data-draw="pfDoors">—</div><div class="mp-meta" data-draw="pfDoorsN">—</div></div>
+      <div class="mp-card"><h3>Doors lost this year</h3><div class="mp-big" data-draw="pfLost" style="color: var(--color-bad)">—</div><div class="mp-meta" data-draw="pfLostN">—</div></div>
+      <div class="mp-card"><h3>Doors leaving soon</h3><div class="mp-big" data-draw="pfSoon">—</div><div class="mp-meta" data-draw="pfSoonN">—</div></div>
+    </div>
+    <h3 class="mp-h3">Owners to check in with</h3>
+    <p class="mp-note">Properties we still manage that show warning signs: units vacant 30+ days, critical work orders open, work orders open 30+ days, or a management end date coming up. New owners (first 90 days) are marked because first impressions decide whether they stay. Red rows have several signs at once.</p>
+    <div class="mp-wrap mp-scroll"><table class="mp-table"><thead><tr><th>Owner</th><th>Property</th><th>Why</th><th>Owner since</th></tr></thead><tbody data-draw="pfRisk"></tbody></table></div>
+    <div class="mp-two">
+      <div>
+        <h3 class="mp-h3">Why owners left</h3>
+        <div class="mp-wrap"><table class="mp-table"><thead><tr><th>Reason</th><th class="mp-num">Properties this year</th><th class="mp-num">Doors this year</th><th class="mp-num">Properties since 2025</th><th class="mp-num">Typical time with us</th></tr></thead><tbody data-draw="pfReasons"></tbody></table></div>
+      </div>
+      <div>
+        <h3 class="mp-h3">Doors by month (AppFolio month-end count, HOA units included)</h3>
+        <div class="mp-wrap mp-scroll"><table class="mp-table"><thead><tr><th>Month</th><th class="mp-num">GA</th><th class="mp-num">TN</th><th class="mp-num">NC</th><th class="mp-num">Total</th><th class="mp-num">Change</th></tr></thead><tbody data-draw="pfMonths"></tbody></table></div>
+      </div>
+    </div>
+    <h3 class="mp-h3">Left recently or leaving</h3>
+    <div class="mp-wrap mp-scroll"><table class="mp-table"><thead><tr><th>Management end</th><th>Property</th><th>Owner</th><th>Reason</th><th class="mp-num">Doors</th><th class="mp-num">Time with us</th></tr></thead><tbody data-draw="pfLeft"></tbody></table></div>
+
+    <h2 class="mp-h2">Vacancy and turn speed</h2>
+    <div class="mp-grid" style="margin-bottom: var(--cds-gap-md)">
+      <div class="mp-card"><h3>Units vacant now</h3><div class="mp-big" data-draw="pfVac">—</div><div class="mp-meta" data-draw="pfVacN">—</div></div>
+      <div class="mp-card"><h3>Move-out to move-in (typical)</h3><div class="mp-big" data-draw="pfTurn">—</div><div class="mp-meta" data-draw="pfTurnN">—</div></div>
+    </div>
+    <p class="mp-note">Rent missed = days vacant × market rent. Red rows have been vacant 45+ days.</p>
+    <div class="mp-wrap mp-scroll"><table class="mp-table"><thead><tr><th>Property</th><th>Unit</th><th>Status</th><th>Moved out</th><th>Rent-ready</th><th class="mp-num">Days vacant</th><th class="mp-num">Market rent</th></tr></thead><tbody data-draw="pfVacRows"></tbody></table></div>
+
+    <h2 class="mp-h2">Renewals</h2>
+    <div class="mp-grid" style="margin-bottom: var(--cds-gap-md)">
+      <div class="mp-card"><h3>Renewal rate this year</h3><div class="mp-big" data-draw="pfRenRate">—</div><div class="mp-meta" data-draw="pfRenRateN">—</div></div>
+      <div class="mp-card"><h3>Ending soon with no offer sent</h3><div class="mp-big" data-draw="pfRenDue" style="color: var(--color-bad)">—</div><div class="mp-meta" data-draw="pfRenDueN">—</div></div>
+    </div>
+    <p class="mp-note">Leases ending in the next 90 days. Red: no decision and no renewal offer with 60 days or less to go.</p>
+    <div class="mp-wrap mp-scroll"><table class="mp-table"><thead><tr><th>Lease ends</th><th>Property</th><th>Unit</th><th>Outcome</th><th>Renewal offer</th><th class="mp-num">Rent</th></tr></thead><tbody data-draw="pfRenRows"></tbody></table></div>
+  </section>
+
+  <section id="map" data-section hidden>
+    <p class="mp-note">Every property we manage, have onboarded or have offboarded since January 2025, updated each morning from AppFolio. Click a pin for details. <strong>Flashing red = off target</strong>: a unit vacant 30+ days or a critical work order open. Pins placed by ZIP code (address not matched) are hollow.</p>
+    <div class="mp-chips" role="group" aria-label="Show on map">
+      <button class="mp-chip" data-mapshow="current" aria-pressed="true">Managed now</button>
+      <button class="mp-chip" data-mapshow="all" aria-pressed="false">Include offboarded</button>
+      <button class="mp-chip" data-mapshow="offtarget" aria-pressed="false">Off target only</button>
+      <button class="mp-chip" data-mapshow="changes" aria-pressed="false">Onboarded or leaving (90 days)</button>
+      <a class="mp-chip" id="map-kml" href="#" download="motion-properties.kml">Download for Google My Maps</a>
+    </div>
+    <div class="mp-maplegend" data-draw="mapLegend"></div>
+    <div id="mp-map" data-draw="propMap"></div>
+  </section>
+
   <section id="comms" data-section hidden>
     <p class="mp-note">Teams Phone calls with outside numbers, and how fast owner and tenant emails get a first reply. Staff names and times only: no phone numbers, email addresses or message text are stored. <span data-draw="cmAsOf" data-source="comm_calls"></span></p>
     <div class="mp-chips" role="group" aria-label="Period">
@@ -473,6 +551,7 @@
           <tr><td>Utility and materials bill-back check</td><td>Ramp (utility payments and materials purchases) against AppFolio bills to the property</td><td>Automatic, every Monday</td><td>In Ramp, require the QuickBooks Customer/Job (property) field on Owner Utilities Paid and Supplies &amp; materials purchases; until then the property is read from the memo.</td></tr>
           <tr><td>Lease renewals</td><td>AppFolio tracks renewals, but the connector's lease records don't hold every 2026 expiration (it found 14; its renewal list shows only renewed leases, so 100% every month)</td><td>Entered in the workbook</td><td>Schedule AppFolio's Lease Expiration / Renewal Summary report to email or OneDrive monthly; the Monday refresh can then read it.</td></tr>
           <tr><td>Tenant and prospect response time</td><td>AppFolio keeps when a request was created and its latest assignment, not the first reply, and has no first-contact time on guest cards</td><td>Entered in the workbook</td><td>Use AppFolio's Work Order or Guest Card response reports if your plan has them, or keep entering.</td></tr>
+          <tr><td>Portfolio and Map tabs</td><td>AppFolio (read-only): property list with management start and end dates, doors by month, reasons owners left, vacancies and unit turns, lease renewals. Map pins placed with the US Census address lookup</td><td>Automatic, every morning</td><td>Nothing. Record a reason whenever a management agreement ends so the reasons table stays useful.</td></tr>
           <tr><td>Communications tab</td><td>Microsoft 365 (read-only app "Motion Dashboard"): Teams Phone call records, and Outlook message times for emails from current AppFolio owners and tenants. No email text, addresses or phone numbers are shown. Emails with no Outlook reply are checked against the person's AppFolio history each night</td><td>Automatic, every night</td><td>Nothing.</td></tr>
           <tr><td>Google review ratings</td><td>Google Business Profile through Windsor.ai: all-time star rating and review count for the Loganville (Georgia), Chattanooga and Raleigh profiles</td><td>Automatic, every morning</td><td>Nothing. Charlotte, Macon and Fort Valley have no Google profile connected.</td></tr>
           <tr><td>Leads to showings, showings to applications</td><td>Tenant Turner: showings that actually happened (self-access code sent, or confirmed and in the past; no-shows and cancellations left out) / new leads, by month. Showings to applications: AppFolio applications received / those same Tenant Turner showings</td><td>Automatic: Tenant Turner every morning, AppFolio applications every Monday</td><td>Nothing.</td></tr>
@@ -629,15 +708,17 @@
 </div>
 
 </div>
-<script src="dash.js?v=202611190216"></script>
-<script src="sc.js?v=202611190216"></script>
-<script src="app.js?v=202611190216"></script>
-<script src="ramp.js?v=202611190216"></script>
-<script src="companies.js?v=202611190216"></script>
-<script src="owners.js?v=202611190216"></script>
-<script src="reviews.js?v=202611190216"></script>
-<script src="comms.js?v=202611190216"></script>
-<script src="entry.js?v=202611190216"></script>
-<script src="main.js?v=202611190216"></script>
+<script src="dash.js?v=202611191447"></script>
+<script src="sc.js?v=202611191447"></script>
+<script src="app.js?v=202611191447"></script>
+<script src="ramp.js?v=202611191447"></script>
+<script src="companies.js?v=202611191447"></script>
+<script src="owners.js?v=202611191447"></script>
+<script src="reviews.js?v=202611191447"></script>
+<script src="portfolio.js?v=202611191447"></script>
+<script src="map.js?v=202611191447"></script>
+<script src="comms.js?v=202611191447"></script>
+<script src="entry.js?v=202611191447"></script>
+<script src="main.js?v=202611191447"></script>
 </body>
 </html>
