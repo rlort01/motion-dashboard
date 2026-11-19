@@ -191,7 +191,7 @@
     const g = document.createElement('span'); g.textContent = r.goal !== null ? 'Goal ' + fmtGoal(r) : r.goalText ? 'Goal ' + r.goalText : 'No goal';
     el.appendChild(g);
     if (r.source && r.source !== 'Entered' && r.source !== 'Mixed') { const sp = document.createElement('span'); sp.textContent = ' · from ' + r.source; el.appendChild(sp); }
-    if (r.status) { const p = document.createElement('span'); p.className = 'mp-pill ' + (r.status === 'On target' ? 'mp-ok' : 'mp-bad'); p.textContent = r.status; p.style.marginLeft = '6px'; el.appendChild(p); }
+    if (r.status) { const p = document.createElement('span'); p.className = 'mp-pill ' + (r.status === 'On target' ? 'mp-ok' : 'mp-bad mp-flash'); p.textContent = r.status; p.style.marginLeft = '6px'; el.appendChild(p); }
     if (r.value !== null && r.prior !== null) {
       const d = r.value - r.prior;
       const c = document.createElement('div');
@@ -226,7 +226,7 @@
       tr.onkeydown = (e) => { if (e.key === 'Enter') tr.onclick(); };
       td(tr, r.METRIC); td(tr, r.goal !== null ? fmtGoal(r) : r.goalText); td(tr, r.owner);
       td(tr, fmtVal(r.value, r.unit), 'mp-num'); td(tr, fmtVal(r.prior, r.unit), 'mp-num'); td(tr, fmtVal(r.ytd, r.unit), 'mp-num');
-      const s = td(tr, ''); if (r.status) { const p = document.createElement('span'); p.className = 'mp-pill ' + (r.status === 'On target' ? 'mp-ok' : 'mp-bad'); p.textContent = r.status; s.appendChild(p); }
+      const s = td(tr, ''); if (r.status) { const p = document.createElement('span'); p.className = 'mp-pill ' + (r.status === 'On target' ? 'mp-ok' : 'mp-bad mp-flash'); p.textContent = r.status; s.appendChild(p); }
       const auto = r.source && r.source !== 'Entered' && r.source !== 'Mixed';
       const so = td(tr, auto ? r.source + ' (auto)' : r.source === 'Mixed' ? 'Auto + entered' : r.source === 'Entered' ? 'Entered' : ''); if (auto) so.style.color = 'var(--color-ok)';
       tb.appendChild(tr);

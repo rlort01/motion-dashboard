@@ -3,8 +3,8 @@
 // be imported into Google My Maps.
 (function () {
   const DAY = 86400000;
-  const COLORS = { off: '#d62828', leaving: '#f08c00', newp: '#1c7ed6', active: '#2b8a3e', left: '#868e96' };
-  const LABEL = { off: 'Off target', leaving: 'Leaving (end date set)', newp: 'Onboarded in the last 90 days', active: 'Managed', left: 'Offboarded' };
+  const COLORS = { hoa: '#7048e8', off: '#d62828', leaving: '#f08c00', newp: '#1c7ed6', active: '#2b8a3e', left: '#868e96' };
+  const LABEL = { hoa: 'HOA (not counted as doors)', off: 'Needs attention', leaving: 'Leaving (end date set)', newp: 'Onboarded in the last 90 days', active: 'Managed', left: 'Offboarded' };
   const view = { show: 'current' };
   let map = null, layer = null;
   const rowsOf = (id) => { const d = dash.data(id); return d.status === 'ok' && Array.isArray(d.data) ? d.data : null; };
@@ -32,7 +32,9 @@
         if (c.length) why.push(c.length + ' critical work order' + (c.length > 1 ? 's' : '') + ' open (' + c.map((r) => '#' + r.wo).join(', ') + ')');
       }
       const isNew = p.START && now - t(p.START) <= 90 * DAY && t(p.START) <= now;
-      const status = ended ? 'left' : why.length ? 'off' : leaving ? 'leaving' : isNew ? 'newp' : 'active';
+      const hoa = /^hoa$/i.test(p.TYPE || '');
+      if (hoa) why.length = 0;
+      const status = ended ? 'left' : hoa ? 'hoa' : why.length ? 'off' : leaving ? 'leaving' : isNew ? 'newp' : 'active';
       return { p, status, why, vac: v, isNew, leaving, ended, zip: /^ZIP /.test(p.MATCHED || '') };
     });
   };
@@ -40,9 +42,9 @@
 
   const popup = (x) => {
     const p = x.p;
-    return '<strong>' + esc(p.ADDRESS) + '</strong><br>' + esc(p.OWNER || '') + '<br>' + esc(p.UNITS) + ' door' + (+p.UNITS === 1 ? '' : 's') + ' · ' + esc(p.TYPE || '') +
+    return '<strong>' + esc(p.ADDRESS) + '</strong><br>' + esc(p.OWNER || '') + '<br>' + esc(p.UNITS) + (/^hoa$/i.test(p.TYPE || '') ? ' HOA homes' : ' door' + (+p.UNITS === 1 ? '' : 's')) + ' · ' + esc(p.TYPE || '') +
       '<br>Managed ' + (p.START ? 'since ' + fmtD(p.START) : '') + (p.END ? (x.ended ? ' until ' : ' · ends ') + fmtD(p.END) : '') +
-      (x.why.length ? '<br><span style="color:' + COLORS.off + '"><strong>Off target:</strong> ' + esc(x.why.join('; ')) + '</span>' : '') +
+      (x.why.length ? '<br><span style="color:' + COLORS.off + '"><strong>Needs attention:</strong> ' + esc(x.why.join('; ')) + '</span>' : '') +
       (x.vac.length && !x.why.length ? '<br>Vacant: ' + x.vac.map((v) => esc(v.unit) + (v.days !== null ? ' (' + v.days + ' days)' : '')).join(', ') : '');
   };
 
@@ -66,7 +68,7 @@
     pts.sort((a, b) => (a.status === 'off') - (b.status === 'off')).forEach((x) => {
       const size = x.status === 'off' ? 18 : 14;
       const icon = L.divIcon({ className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2],
-        html: '<div class="mp-pin' + (x.status === 'off' ? ' mp-off' : '') + (x.zip ? ' mp-hollow' : '') + '" style="width:' + size + 'px;height:' + size + 'px;background:' + COLORS[x.status] + ';border-color:' + (x.zip ? COLORS[x.status] : '#fff') + '"></div>' });
+        html: '<div class="mp-pin' +  + (x.zip ? ' mp-hollow' : '') + '" style="width:' + size + 'px;height:' + size + 'px;background:' + COLORS[x.status] + ';border-color:' + (x.zip ? COLORS[x.status] : '#fff') + '"></div>' });
       L.marker([+x.p.LAT, +x.p.LON], { icon, title: x.p.ADDRESS, zIndexOffset: x.status === 'off' ? 1000 : 0 }).bindPopup(popup(x)).addTo(layer);
     });
     fit = () => { const b = pts.map((x) => [+x.p.LAT, +x.p.LON]); if (b.length) map.fitBounds(b, { padding: [30, 30], maxZoom: 12 }); };

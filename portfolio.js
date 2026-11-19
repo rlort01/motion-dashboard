@@ -14,13 +14,15 @@
   // Street key for joining AppFolio addresses written slightly differently ("126 Ronald Pride Blvd - A1 Fort Valley").
   const key = (a) => { const w = String(a || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean); return w.length >= 2 ? w[0] + ' ' + w[1] : ''; };
   const units = (r) => +r.UNITS || 0;
-  const managed = () => (rowsOf('props') || []).filter((p) => !p.END || t(p.END) > now);
-  const leftKeys = () => new Set((rowsOf('props') || []).filter((p) => p.END && t(p.END) <= now).map((p) => key(p.ADDRESS)));
+    const isHoa = (p) => /^hoa$/i.test(p.TYPE || '');
+  const rentals = () => (rowsOf('props') || []).filter((p) => !isHoa(p));
+  const managed = () => rentals().filter((p) => !p.END || t(p.END) > now);
+  const leftKeys = () => new Set(rentals().filter((p) => p.END && t(p.END) <= now).map((p) => key(p.ADDRESS)));
   const activeKeys = () => new Set(managed().map((p) => key(p.ADDRESS)));
 
   // ---------- Owner retention ----------
   const ret = () => {
-    const props = rowsOf('props') || [], lost = (rowsOf('doors_lost') || []).filter((r) => inMarket(r.STATE));
+    const props = rentals(), lost = (rowsOf('doors_lost') || []).filter((r) => inMarket(r.STATE) && !/hoa/i.test(r.ADDRESS + ' ' + (r.TYPE || '')));
     const yr = new Date().getFullYear() + '';
     const p = props.filter((r) => inMarket(r.STATE));
     const doorsNow = d3.sum(p.filter((r) => !r.END || t(r.END) > now), units);
@@ -38,19 +40,24 @@
   dash.draw('pfSoon', (el) => { el.textContent = rowsOf('doors_lost') ? String(ret().soonDoors) : '—'; });
   dash.draw('pfSoonN', (el) => { if (!rowsOf('doors_lost')) return; const r = ret(); el.textContent = r.soon.length + ' properties with a management end date coming up'; });
 
+  // Rental doors at each month end, worked out from management start/end dates (HOA communities not counted).
   dash.draw('pfMonths', (tb) => {
     tb.replaceChildren();
-    const m = rowsOf('doors_month'); if (!m) return;
-    const by = d3.rollups(m, (v) => Object.fromEntries(v.map((r) => [r.STATE, +r.DOORS])), (r) => r.MONTH_END).sort((a, b) => d3.descending(a[0], b[0])).slice(0, 13);
-    by.forEach(([mo, s], i) => {
-      const tot = (s.GA || 0) + (s.TN || 0) + (s.NC || 0);
-      const prev = by[i + 1] ? Object.values(by[i + 1][1]).reduce((a, b) => a + b, 0) : null;
+    const props = rentals(); if (!props.length) return;
+    const ends = []; const d = new Date(); d.setDate(1); d.setHours(12);
+    for (let i = 0; i < 13; i++) { const e = new Date(d.getFullYear(), d.getMonth() - i, 0, 12); ends.push(e); }
+    const at = (e) => { const s = { GA: 0, TN: 0, NC: 0 }; props.forEach((p) => { if (p.START && t(p.START) <= +e && (!p.END || t(p.END) > +e) && s[p.STATE] !== undefined) s[p.STATE] += units(p); }); return s; };
+    const rows = ends.map((e) => ({ e, s: at(e) }));
+    rows.slice(0, 12).forEach((r, i) => {
+      const tot = r.s.GA + r.s.TN + r.s.NC, p0 = rows[i + 1], prev = p0 ? p0.s.GA + p0.s.TN + p0.s.NC : null;
       const tr = document.createElement('tr');
-      td(tr, d3.timeFormat('%b %Y')(new Date(t(mo)))); td(tr, s.GA || 0, 'mp-num'); td(tr, s.TN || 0, 'mp-num'); td(tr, s.NC || 0, 'mp-num'); td(tr, tot, 'mp-num');
+      td(tr, d3.timeFormat('%b %Y')(r.e)); td(tr, r.s.GA, 'mp-num'); td(tr, r.s.TN, 'mp-num'); td(tr, r.s.NC, 'mp-num'); td(tr, tot, 'mp-num');
       const c = td(tr, prev === null ? '' : (tot - prev >= 0 ? '+' : '') + (tot - prev), 'mp-num'); if (prev !== null && tot < prev) c.style.color = 'var(--color-bad)';
       tb.appendChild(tr);
     });
   });
+  dash.draw('pfHoa', (el) => { const h = (rowsOf('props') || []).filter((p) => isHoa(p) && (!p.END || t(p.END) > now) && inMarket(p.STATE)); el.textContent = rowsOf('props') ? String(h.length) : '—'; });
+  dash.draw('pfHoaN', (el) => { const h = (rowsOf('props') || []).filter((p) => isHoa(p) && (!p.END || t(p.END) > now) && inMarket(p.STATE)); if (!rowsOf('props')) return; el.textContent = h.length ? d3.sum(h, units) + ' homes in ' + h.map((p) => p.ADDRESS.replace(/,.*$/, '')).join(', ') + ' (not counted as doors)' : 'None'; });
   dash.draw('pfReasons', (tb) => {
     tb.replaceChildren();
     const lost = rowsOf('doors_lost'); if (!lost) return;

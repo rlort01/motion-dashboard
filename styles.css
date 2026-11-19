@@ -154,7 +154,8 @@ tr.mp-entry-sec td { background: var(--m-navy); color: var(--m-beige); font-weig
 .mp-maplegend i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.35); }
 .mp-pin { border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 1px 3px rgba(0,0,0,.4); }
 .mp-pin.mp-hollow { background: #fff !important; border-width: 3px; }
-.mp-pin.mp-off { animation: mp-flash 0.9s ease-in-out infinite; }
-@keyframes mp-flash { 0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 0 0 0 rgba(214,40,40,.7); } 50% { opacity: .35; transform: scale(1.35); box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 0 0 8px rgba(214,40,40,0); } }
-@media (prefers-reduced-motion: reduce) { .mp-pin.mp-off { animation-duration: 2.4s; } }
 .leaflet-popup-content { font-size: 13px; line-height: 1.4; }
+.mp-pill.mp-flash { animation: mp-flash-pill 1s ease-in-out infinite; background: color-mix(in srgb, var(--color-bad) 12%, transparent); font-weight: 600; }
+@keyframes mp-flash-pill { 0%, 100% { opacity: 1; box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-bad) 55%, transparent); } 50% { opacity: .3; box-shadow: 0 0 0 4px transparent; } }
+@media (prefers-reduced-motion: reduce) { .mp-pill.mp-flash { animation-duration: 2.5s; } }
+.mp-hoa-card { border-left: 4px solid #7048e8; }

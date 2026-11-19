@@ -367,7 +367,7 @@
   const statusPill = (name, key) => dash.draw(name, (el) => {
     const k = one('kpi');
     const s = k ? statusOf(key, k[key]) : null;
-    el.className = 'mp-pill ' + (s === null ? '' : s ? 'mp-ok' : 'mp-bad');
+    el.className = 'mp-pill ' + (s === null ? '' : s ? 'mp-ok' : 'mp-bad mp-flash');
     setText(el, s === null ? (k && mo() !== CURRENT_MONTH && ['ins', 'dom', 'l2a'].includes(key) ? 'current month only' : 'no data') : s ? 'On target' : 'Off target');
   });
   statusPill('insStatus', 'ins'); statusPill('delinqStatus', 'delinq'); statusPill('vacStatus', 'vacancy');

@@ -16,7 +16,11 @@
   });
 
   const load = async () => {
-    const { data, error } = await sb.from('datasets').select('id,kind,rows,updated_at');
+    const t0 = performance.now();
+    let { data, error } = await sb.from('datasets').select('id,kind,rows,updated_at');
+    // A refresh can race the sign-in token renewal; if nothing came back, wait a moment and try once more.
+    if (!error && (!data || data.length < 5)) { await new Promise((ok) => setTimeout(ok, 1500)); await sb.auth.getSession(); ({ data, error } = await sb.from('datasets').select('id,kind,rows,updated_at')); }
+    window.mpLoadMs = Math.round(performance.now() - t0);
     if (error) { showLogin('Could not load data: ' + error.message); return; }
     if (!data.length) { showLogin('Signed in, but no data is shared with this account. Use your @motionpmg.com, @motionpropertypreservation.com or @motionrealty.com email.'); return; }
     // Numbers typed on the "Enter numbers" tab take precedence over the workbook copy.
@@ -62,7 +66,7 @@
       dash._setDataset(d.id, 'ok', d.rows);
     });
     if (window.mpEntry) window.mpEntry.load();
-    if (!window.mpDiagSent) { window.mpDiagSent = true; setTimeout(sendDiag, 4000); }
+    if (!window.mpDiagSent) { window.mpDiagSent = true; setTimeout(sendDiag, 6000); }
     updated = new Date(d3.max(data, (d) => new Date(d.updated_at)));
     dash._redraw();
   };
@@ -83,7 +87,11 @@
         tiles: q('#scorecard .mp-big').map((e) => e.textContent.slice(0, 20)),
         tileOverflow: q('.mp-big').filter((e) => e.offsetParent && e.scrollWidth > e.clientWidth + 1).length,
         scorecardHidden: document.getElementById('scorecard').hidden, version: (document.querySelector('script[src^="dash.js"]') || {}).src,
-        errors: (window.mpErrors || []).slice(0, 15)
+        errors: (window.mpErrors || []).slice(0, 15),
+        tab: location.hash || '#scorecard',
+        // Blank or placeholder drawings per tab, to find what didn't show after a refresh.
+        blanks: Object.fromEntries(q('[data-section]').map((s) => [s.id, q('#' + s.id + ' [data-draw]').filter((e) => /^(|—|no data)$/.test(e.textContent.trim())).map((e) => e.getAttribute('data-draw')).slice(0, 25)])),
+        loadMs: window.mpLoadMs || null
       };
       await sb.from('client_diagnostics').insert({ kind: 'load', detail });
     } catch (e) { /* diagnostics must never break the page */ }
