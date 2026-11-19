@@ -112,11 +112,45 @@
         eng.forEach((v, mo) => { const p = eng.get(mo - 1); if (p) put('r55', 'Combined', mo, (v - p) / p, 'Change in Facebook engagements vs the month before', 'Windsor.ai'); });
         ['Georgia', 'Tennessee', 'North Carolina'].forEach((mk) => g('gbp_clicks', mk).forEach((v, mo) => put('r57', mk, mo, v, 'Google Business Profile calls + website clicks', 'Windsor.ai')));
       }
+      const MK = (x) => ST[x] || ({ Georgia: 1, Tennessee: 1, 'North Carolina': 1 }[x] ? x : null);
+      const days = (a, b) => Math.round((T(b) - T(a)) / 86400000);
+      // r29 Credits issued: concessions, fee waivers, refunds and other give-backs (deposit settlements and owner transfers excluded).
+      const cr = ds('credits');
+      if (cr) {
+        const g = new Map();
+        cr.forEach((r) => { const mk = MK(r.MARKET), mo = mon(r.DATE); if (mk && mo) { const k = mk + '|' + mo; g.set(k, (g.get(k) || 0) + (+r.AMOUNT || 0)); } });
+        ['Georgia', 'Tennessee', 'North Carolina'].forEach((mk) => { for (let mo = 1; mo <= curMo; mo++) put('r29', mk, mo, g.get(mk + '|' + mo) || 0, 'Concessions, fee waivers, refunds and repair/utility credits given back', 'AppFolio'); });
+      }
+      // r19 Contract to market (new vacant only): management start to listing live, by month listed.
+      const li2 = ds('listings');
+      if (li2) each(li2.filter((r) => /vac/i.test(r.START_STATUS || '') && ST[r.STATE] && r.MGMT_START >= '2026-01-01' && mon(r.LISTED) && r.LISTED >= r.MGMT_START).map((r) => ({ k: ST[r.STATE] + '|' + mon(r.LISTED), v: days(r.MGMT_START, r.LISTED) })),
+        (mk, mo, v) => put('r19', mk, mo, avg(v), 'Days from management start to listing live (properties vacant at takeover), ' + v.length + ' listing(s)', 'AppFolio'));
+      // r20 Contract to tenant portal (occupied only): management start to first portal activation invite, by start month.
+      const po = ds('portal');
+      if (po) each(po.filter((r) => ST[r.STATE] && r.FIRST_INVITE && mon(r.MGMT_START)).map((r) => ({ k: ST[r.STATE] + '|' + mon(r.MGMT_START), v: Math.max(0, days(r.MGMT_START, r.FIRST_INVITE)) })),
+        (mk, mo, v) => put('r20', mk, mo, avg(v), 'Days from management start to the tenant portal invite (occupied takeovers), ' + v.length + ' propert' + (v.length === 1 ? 'y' : 'ies') + '. AppFolio keeps only the latest invite per tenant.', 'AppFolio'));
+      // r50-52 Active 30/60/90: open LeadSimple leads with activity in the last 30, 60 or 90 days (latest snapshot each month).
+      const ll = ds('ls_leads');
+      if (ll) {
+        const snap = new Map();
+        ll.forEach((r) => { const mo = mon(r.SNAP_DATE); if (mo && (!snap.has(mo) || r.SNAP_DATE > snap.get(mo))) snap.set(mo, r.SNAP_DATE); });
+        snap.forEach((sd, mo) => ['Georgia', 'Tennessee', 'North Carolina'].forEach((mk) => {
+          const open = ll.filter((r) => r.SNAP_DATE === sd && r.MARKET === mk && /active|passive/i.test(r.LIFECYCLE));
+          [['r50', 30], ['r51', 60], ['r52', 90]].forEach(([id, n]) => put(id, mk, mo, open.filter((r) => r.LAST_TOUCHED && days(r.LAST_TOUCHED, sd) <= n).length,
+            'Open leads in the ' + mk + ' pipeline touched in the last ' + n + ' days (of ' + open.length + ' open)', 'LeadSimple'));
+        }));
+      }
+      // r36, r40-r44 from Jobber (built by jobber_metrics.py in the Jobber refresh).
+      const jm = ds('jobber_metrics');
+      if (jm) jm.forEach((r) => { if (+r.MONTH <= curMo) put(r.ID, r.MARKET, +r.MONTH, +r.VALUE, r.NOTE, 'Jobber'); });
       sys.rows = rows;
     }
     window.mpDsTimes = Object.fromEntries(data.map((d) => [d.id, d.updated_at]));
     data.forEach((d) => {
       if (d.id === 'sc2026') {
+        // Retired metrics: search ranking and NPS (not tracked)
+        const DROP = new Set(['r56', 'r58']);
+        d.rows = d.rows.filter((r) => !DROP.has(r.ID));
         window.mpWorkbook = d.rows;
         if (!ent.error && ent.data && ent.data.length) {
           const rows = d.rows.map((r) => Object.assign({}, r));
