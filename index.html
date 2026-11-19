@@ -7,7 +7,7 @@
 <title>Motion Dashboard</title>
 <link rel="icon" href="rings.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Source+Sans+3:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=202611191451">
+<link rel="stylesheet" href="styles.css?v=202611191452">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -456,11 +456,11 @@
   </section>
 
   <section id="map" data-section hidden>
-    <p class="mp-note">Every property we manage, have onboarded or have offboarded since January 2025, updated each morning from AppFolio. Click a pin for details. Red = needs attention: a unit vacant 30+ days or a critical work order open. Purple = HOA communities we manage (not counted as doors). Pins placed by ZIP code (address not matched) are hollow.</p>
+    <p class="mp-note">Every property we manage, have onboarded or have offboarded since January 2025, updated each morning from AppFolio. Click a pin for details. Properties with issues flash: <strong>red</strong> = urgent work order open, <strong>yellow</strong> = a unit vacant 30+ days, <strong>orange</strong> = a work order open 30+ days (the most serious issue sets the color). Purple = HOA communities we manage (not counted as doors). Pins placed by ZIP code (address not matched) are hollow.</p>
     <div class="mp-chips" role="group" aria-label="Show on map">
       <button class="mp-chip" data-mapshow="current" aria-pressed="true">Managed now</button>
       <button class="mp-chip" data-mapshow="all" aria-pressed="false">Include offboarded</button>
-      <button class="mp-chip" data-mapshow="offtarget" aria-pressed="false">Needs attention only</button>
+      <button class="mp-chip" data-mapshow="offtarget" aria-pressed="false">Flashing (issues) only</button>
       <button class="mp-chip" data-mapshow="changes" aria-pressed="false">Onboarded or leaving (90 days)</button>
       <a class="mp-chip" id="map-kml" href="#" download="motion-properties.kml">Download for Google My Maps</a>
     </div>
@@ -709,17 +709,17 @@
 </div>
 
 </div>
-<script src="dash.js?v=202611191451"></script>
-<script src="sc.js?v=202611191451"></script>
-<script src="app.js?v=202611191451"></script>
-<script src="ramp.js?v=202611191451"></script>
-<script src="companies.js?v=202611191451"></script>
-<script src="owners.js?v=202611191451"></script>
-<script src="reviews.js?v=202611191451"></script>
-<script src="portfolio.js?v=202611191451"></script>
-<script src="map.js?v=202611191451"></script>
-<script src="comms.js?v=202611191451"></script>
-<script src="entry.js?v=202611191451"></script>
-<script src="main.js?v=202611191451"></script>
+<script src="dash.js?v=202611191452"></script>
+<script src="sc.js?v=202611191452"></script>
+<script src="app.js?v=202611191452"></script>
+<script src="ramp.js?v=202611191452"></script>
+<script src="companies.js?v=202611191452"></script>
+<script src="owners.js?v=202611191452"></script>
+<script src="reviews.js?v=202611191452"></script>
+<script src="portfolio.js?v=202611191452"></script>
+<script src="map.js?v=202611191452"></script>
+<script src="comms.js?v=202611191452"></script>
+<script src="entry.js?v=202611191452"></script>
+<script src="main.js?v=202611191452"></script>
 </body>
 </html>

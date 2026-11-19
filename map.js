@@ -3,8 +3,9 @@
 // be imported into Google My Maps.
 (function () {
   const DAY = 86400000;
-  const COLORS = { hoa: '#7048e8', off: '#d62828', leaving: '#f08c00', newp: '#1c7ed6', active: '#2b8a3e', left: '#868e96' };
-  const LABEL = { hoa: 'HOA (not counted as doors)', off: 'Needs attention', leaving: 'Leaving (end date set)', newp: 'Onboarded in the last 90 days', active: 'Managed', left: 'Offboarded' };
+  const COLORS = { urgent: '#e03131', vacant: '#fcc419', oldwo: '#fd7e14', leaving: '#343a40', newp: '#1c7ed6', active: '#2b8a3e', hoa: '#7048e8', left: '#adb5bd' };
+  const FLASH = { urgent: 1, vacant: 1, oldwo: 1 };
+  const LABEL = { urgent: 'Urgent work order open (flashing)', vacant: 'Unit vacant 30+ days (flashing)', oldwo: 'Work order open 30+ days (flashing)', leaving: 'Leaving (end date set)', newp: 'Onboarded in the last 90 days', active: 'Managed', hoa: 'HOA (not counted as doors)', left: 'Offboarded' };
   const view = { show: 'current' };
   let map = null, layer = null;
   const rowsOf = (id) => { const d = dash.data(id); return d.status === 'ok' && Array.isArray(d.data) ? d.data : null; };
@@ -20,31 +21,33 @@
     const vacBy = d3.group(vac, (v) => key(v.ADDRESS));
     const board = rowsOf('board') || [];
     const crit = d3.group(board.filter((r) => r.priority === 'Urgent' && !/inspection/i.test(r.kind || '')), (r) => key(r.address));
+    const oldWo = d3.group(board.filter((r) => r.days >= 30 && r.priority !== 'Urgent' && !/inspection/i.test(r.kind || '')), (r) => key(r.address));
     const m = dash.params().market;
     return props.filter((p) => p.LAT && (!m || m === 'Combined' || ST[m] === p.STATE)).map((p) => {
       const k = key(p.ADDRESS), ended = p.END && t(p.END) <= now, leaving = p.END && t(p.END) > now;
       const v = (vacBy.get(k) || []).map((x) => ({ unit: x.UNIT, days: +x.DAYS || (x.MOVE_OUT ? Math.round((now - t(x.MOVE_OUT)) / DAY) : null) }));
-      const c = crit.get(k) || [];
+      const c = crit.get(k) || [], old = (oldWo.get(k) || []);
       const why = [];
+      const long = ended ? [] : v.filter((x) => (x.days || 0) >= 30);
       if (!ended) {
-        const long = v.filter((x) => (x.days || 0) >= 30);
+        if (c.length) why.push(c.length + ' urgent work order' + (c.length > 1 ? 's' : '') + ' open (' + c.map((r) => '#' + r.wo).join(', ') + ')');
         if (long.length) why.push(long.length + ' unit' + (long.length > 1 ? 's' : '') + ' vacant 30+ days (longest ' + Math.max(...long.map((x) => x.days)) + ')');
-        if (c.length) why.push(c.length + ' critical work order' + (c.length > 1 ? 's' : '') + ' open (' + c.map((r) => '#' + r.wo).join(', ') + ')');
+        if (old.length) why.push(old.length + ' work order' + (old.length > 1 ? 's' : '') + ' open 30+ days (' + old.map((r) => '#' + r.wo).join(', ') + ')');
       }
+      const issue = ended ? null : c.length ? 'urgent' : long.length ? 'vacant' : old.length ? 'oldwo' : null;
       const isNew = p.START && now - t(p.START) <= 90 * DAY && t(p.START) <= now;
       const hoa = /^hoa$/i.test(p.TYPE || '');
-      if (hoa) why.length = 0;
-      const status = ended ? 'left' : hoa ? 'hoa' : why.length ? 'off' : leaving ? 'leaving' : isNew ? 'newp' : 'active';
+      const status = ended ? 'left' : issue ? issue : hoa ? 'hoa' : leaving ? 'leaving' : isNew ? 'newp' : 'active';
       return { p, status, why, vac: v, isNew, leaving, ended, zip: /^ZIP /.test(p.MATCHED || '') };
     });
   };
-  const visible = (pts) => pts.filter((x) => view.show === 'all' ? true : view.show === 'offtarget' ? x.status === 'off' : view.show === 'changes' ? (x.isNew || x.leaving || (x.ended && Date.now() - t(x.p.END) <= 90 * DAY)) : !x.ended);
+  const visible = (pts) => pts.filter((x) => view.show === 'all' ? true : view.show === 'offtarget' ? !!FLASH[x.status] : view.show === 'changes' ? (x.isNew || x.leaving || (x.ended && Date.now() - t(x.p.END) <= 90 * DAY)) : !x.ended);
 
   const popup = (x) => {
     const p = x.p;
     return '<strong>' + esc(p.ADDRESS) + '</strong><br>' + esc(p.OWNER || '') + '<br>' + esc(p.UNITS) + (/^hoa$/i.test(p.TYPE || '') ? ' HOA homes' : ' door' + (+p.UNITS === 1 ? '' : 's')) + ' · ' + esc(p.TYPE || '') +
       '<br>Managed ' + (p.START ? 'since ' + fmtD(p.START) : '') + (p.END ? (x.ended ? ' until ' : ' · ends ') + fmtD(p.END) : '') +
-      (x.why.length ? '<br><span style="color:' + COLORS.off + '"><strong>Needs attention:</strong> ' + esc(x.why.join('; ')) + '</span>' : '') +
+      (x.why.length ? '<br><span style="color:' + COLORS.urgent + '"><strong>Needs attention:</strong> ' + esc(x.why.join('; ')) + '</span>' : '') +
       (x.vac.length && !x.why.length ? '<br>Vacant: ' + x.vac.map((v) => esc(v.unit) + (v.days !== null ? ' (' + v.days + ' days)' : '')).join(', ') : '');
   };
 
@@ -65,11 +68,12 @@
     layer.clearLayers();
     const pts = visible(points());
     // Off-target pins last so they sit on top.
-    pts.sort((a, b) => (a.status === 'off') - (b.status === 'off')).forEach((x) => {
-      const size = x.status === 'off' ? 18 : 14;
+    const rank = { urgent: 3, vacant: 2, oldwo: 1 };
+    pts.sort((a, b) => (rank[a.status] || 0) - (rank[b.status] || 0)).forEach((x) => {
+      const size = FLASH[x.status] ? 18 : 14;
       const icon = L.divIcon({ className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2],
         html: '<div class="mp-pin' +  + (x.zip ? ' mp-hollow' : '') + '" style="width:' + size + 'px;height:' + size + 'px;background:' + COLORS[x.status] + ';border-color:' + (x.zip ? COLORS[x.status] : '#fff') + '"></div>' });
-      L.marker([+x.p.LAT, +x.p.LON], { icon, title: x.p.ADDRESS, zIndexOffset: x.status === 'off' ? 1000 : 0 }).bindPopup(popup(x)).addTo(layer);
+      L.marker([+x.p.LAT, +x.p.LON], { icon, title: x.p.ADDRESS, zIndexOffset: (rank[x.status] || 0) * 1000 }).bindPopup(popup(x)).addTo(layer);
     });
     fit = () => { const b = pts.map((x) => [+x.p.LAT, +x.p.LON]); if (b.length) map.fitBounds(b, { padding: [30, 30], maxZoom: 12 }); };
     if (!el.dataset.fitted || el.dataset.view !== view.show) { el.dataset.fitted = '1'; el.dataset.view = view.show; if (el.offsetWidth) fit(); }

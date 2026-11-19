@@ -159,3 +159,7 @@ tr.mp-entry-sec td { background: var(--m-navy); color: var(--m-beige); font-weig
 @keyframes mp-flash-pill { 0%, 100% { opacity: 1; box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-bad) 55%, transparent); } 50% { opacity: .3; box-shadow: 0 0 0 4px transparent; } }
 @media (prefers-reduced-motion: reduce) { .mp-pill.mp-flash { animation-duration: 2.5s; } }
 .mp-hoa-card { border-left: 4px solid #7048e8; }
+.mp-pin.mp-blink { animation: mp-blink 1.2s ease-in-out infinite; }
+.mp-pin.mp-blink-fast { animation-duration: 0.8s; }
+@keyframes mp-blink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .3; transform: scale(1.4); } }
+@media (prefers-reduced-motion: reduce) { .mp-pin.mp-blink { animation-duration: 2.5s; } }
