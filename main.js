@@ -140,6 +140,20 @@
             'Open leads in the ' + mk + ' pipeline touched in the last ' + n + ' days (of ' + open.length + ' open)', 'LeadSimple'));
         }));
       }
+      // r43 Rehab profitability and r42 average rehab cost, from AppFolio rehab / make-ready groups:
+      // (billed to owner - paid to outside vendors) / billed. Payments to Motion's own companies are revenue, not cost.
+      const rh = ds('rehab');
+      if (rh) {
+        const done = rh.filter((r) => ST[r.STATE] && +r.BILLED > 0 && mon(r.END || r.START)).map((r) => ({ mk: ST[r.STATE], mo: mon(r.END || r.START), b: +r.BILLED, c: (+r.VENDOR_PAID || 0) - (+r.MOTION_PAID || 0) }));
+        const g = new Map();
+        done.forEach((r) => { const k = r.mk + '|' + r.mo; if (!g.has(k)) g.set(k, []); g.get(k).push(r); });
+        g.forEach((list, k) => {
+          const [mk, mo] = k.split('|'); if (+mo > curMo) return;
+          const b = list.reduce((x, r) => x + r.b, 0), c = list.reduce((x, r) => x + r.c, 0);
+          put('r43', mk, +mo, (b - c) / b, list.length + ' rehab(s): billed $' + Math.round(b).toLocaleString() + ', outside vendors paid $' + Math.round(c).toLocaleString(), 'AppFolio');
+          put('r42', mk, +mo, b / list.length, 'Average billed to the owner per rehab, ' + list.length + ' rehab(s)', 'AppFolio');
+        });
+      }
       // r36, r40-r44 from Jobber (built by jobber_metrics.py in the Jobber refresh).
       const jm = ds('jobber_metrics');
       if (jm) jm.forEach((r) => { if (+r.MONTH <= curMo) put(r.ID, r.MARKET, +r.MONTH, +r.VALUE, r.NOTE, 'Jobber'); });
