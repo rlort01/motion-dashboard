@@ -19,7 +19,7 @@
   // Business hours between two times: Mon-Fri 8:00-18:00 Eastern.
   const bizH = (a, b) => {
     let t = +new Date(a); const end = +new Date(b); let ms = 0;
-    while (t < end) { const n = Math.min(end, t + 15 * 60000); if (isBiz(t)) ms += n - t; t = n; }
+    while (t < end) { const n = Math.min(end, (Math.floor(t / 3600000) + 1) * 3600000); if (isBiz(t)) ms += n - t; t = n; }
     return ms / 3600000;
   };
   // A reply counts from Outlook (same email thread) or from AppFolio (checked nightly), whichever came first.
