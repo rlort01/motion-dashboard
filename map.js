@@ -70,9 +70,14 @@
     // Off-target pins last so they sit on top.
     const rank = { urgent: 3, vacant: 2, oldwo: 1 };
     pts.sort((a, b) => (rank[a.status] || 0) - (rank[b.status] || 0)).forEach((x) => {
-      const size = FLASH[x.status] ? 18 : 14;
-      const icon = L.divIcon({ className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2],
-        html: '<div class="mp-pin' +  + (x.zip ? ' mp-hollow' : '') + '" style="width:' + size + 'px;height:' + size + 'px;background:' + COLORS[x.status] + ';border-color:' + (x.zip ? COLORS[x.status] : '#fff') + '"></div>' });
+      // Round SVG pins: a colored dot with a white ring; properties with issues get a soft pulsing halo.
+      const flash = !!FLASH[x.status], d = flash ? 16 : 12, box = flash ? 44 : 16, c = COLORS[x.status], r = d / 2;
+      const dot = x.zip
+        ? '<circle cx="' + box / 2 + '" cy="' + box / 2 + '" r="' + (r - 1) + '" fill="#fff" stroke="' + c + '" stroke-width="3"/>'
+        : '<circle cx="' + box / 2 + '" cy="' + box / 2 + '" r="' + r + '" fill="' + c + '" stroke="#fff" stroke-width="2"/>';
+      const halo = flash ? '<circle class="mp-halo' + (x.status === 'urgent' ? ' mp-halo-fast' : '') + '" cx="' + box / 2 + '" cy="' + box / 2 + '" r="' + r + '" fill="' + c + '"/>' : '';
+      const icon = L.divIcon({ className: 'mp-pin-wrap', iconSize: [box, box], iconAnchor: [box / 2, box / 2],
+        html: '<svg width="' + box + '" height="' + box + '" viewBox="0 0 ' + box + ' ' + box + '" style="overflow:visible;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))">' + halo + dot + '</svg>' });
       L.marker([+x.p.LAT, +x.p.LON], { icon, title: x.p.ADDRESS, zIndexOffset: (rank[x.status] || 0) * 1000 }).bindPopup(popup(x)).addTo(layer);
     });
     fit = () => { const b = pts.map((x) => [+x.p.LAT, +x.p.LON]); if (b.length) map.fitBounds(b, { padding: [30, 30], maxZoom: 12 }); };

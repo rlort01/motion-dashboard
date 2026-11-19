@@ -47,6 +47,73 @@
       });
       sys.rows = rows;
     }
+    // More scorecard metrics filled automatically from the daily AppFolio, Outlook and AppFolio-message data
+    // (they show as "automatic" on the Enter numbers tab). Months up to the current one in 2026.
+    if (sys && sys.rows) {
+      const rows = sys.rows.map((r) => Object.assign({}, r));
+      const at = new Map(rows.map((r, i) => [r.ID + '|' + r.MARKET + '|' + (+r.MONTH), i]));
+      const put = (id, market, mo, val, note, src) => {
+        if (val === null || val === undefined || !isFinite(val)) return;
+        const k = id + '|' + market + '|' + mo, v = String(Math.round(val * 10000) / 10000);
+        if (at.has(k)) Object.assign(rows[at.get(k)], { VALUE: v, NOTE: note, SOURCE: src });
+        else { at.set(k, rows.length); rows.push({ ID: id, MARKET: market, MONTH: String(mo), VALUE: v, NOTE: note, SOURCE: src }); }
+      };
+      const ds = (id) => { const x = data.find((d) => d.id === id); return x && Array.isArray(x.rows) ? x.rows : null; };
+      const ST = { GA: 'Georgia', TN: 'Tennessee', NC: 'North Carolina' };
+      const now = new Date(), curMo = now.getMonth() + 1, Y = '2026';
+      const mon = (s) => (String(s || '').slice(0, 4) === Y ? +String(s).slice(5, 7) : null);
+      const T = (s) => Date.parse(String(s).slice(0, 10) + 'T12:00:00');
+      const avg = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
+      const each = (list, fn) => { const g = new Map(); list.forEach((r) => { const k = r.k; if (!g.has(k)) g.set(k, []); g.get(k).push(r.v); }); g.forEach((v, k) => { const [mk, mo] = k.split('|'); if (+mo <= curMo) fn(mk, +mo, v); }); };
+      // Business hours between two times (Mon-Fri 8 AM-6 PM Eastern), hour by hour.
+      const ETF = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', hour12: false });
+      const biz = (t) => { const p = Object.fromEntries(ETF.formatToParts(new Date(t)).map((x) => [x.type, x.value])); const h = +p.hour % 24; return !['Sat', 'Sun'].includes(p.weekday) && h >= 8 && h < 18; };
+      const bizH = (a, b) => { let t = +new Date(a), ms = 0; const e = +new Date(b); while (t < e) { const n = Math.min(e, (Math.floor(t / 3600000) + 1) * 3600000); if (biz(t)) ms += n - t; t = n; } return ms / 3600000; };
+      // r14 Lease renewals: renewed / (renewed + moved out + notice given), by month the lease ended.
+      const ren = ds('renewals');
+      if (ren) each(ren.filter((r) => ST[r.STATE] && mon(r.LEASE_END) && T(r.LEASE_END) <= +now && /renew|moved|notice/i.test(r.OUTCOME)).map((r) => ({ k: ST[r.STATE] + '|' + mon(r.LEASE_END), v: /renew/i.test(r.OUTCOME) ? 1 : 0 })),
+        (mk, mo, v) => put('r14', mk, mo, avg(v), 'Leases that ended this month and renewed / ended (renewed, moved out or gave notice)', 'AppFolio'));
+      // r16 / r17 Tenant and owner response time: average business hours to the first reply (Outlook or AppFolio).
+      const em = ds('resp_email');
+      if (em) ['Tenant', 'Owner'].forEach((role) => {
+        const list = em.filter((r) => r.ROLE === role && ST[{ Georgia: 'GA', Tennessee: 'TN', 'North Carolina': 'NC' }[r.MARKET]] && mon(r.RECEIVED)).map((r) => {
+          const o = r.REPLIED ? +new Date(r.REPLIED) : null, a = r.AF_REPLIED ? +new Date(r.AF_REPLIED) : null;
+          const rep = o && a ? Math.min(o, a) : o || a;
+          return rep ? { k: r.MARKET + '|' + mon(r.RECEIVED), v: bizH(r.RECEIVED, rep) } : null;
+        }).filter(Boolean);
+        each(list, (mk, mo, v) => put(role === 'Tenant' ? 'r16' : 'r17', mk, mo, avg(v), role + ' emails: average business hours to the first reply (Outlook or AppFolio)', 'Outlook + AppFolio'));
+      });
+      // r26 Application processing time: average business days from received to approval.
+      const ap = ds('apps');
+      if (ap) each(ap.filter((r) => ST[r.STATE] && /approved/i.test(r.DECISION) && r.BDAYS !== '' && mon(r.RECEIVED)).map((r) => ({ k: ST[r.STATE] + '|' + mon(r.RECEIVED), v: +r.BDAYS })),
+        (mk, mo, v) => put('r26', mk, mo, avg(v), 'Approved applications: average business days from received to approval', 'AppFolio'));
+      // r28 Owner debt: total owed by owners at month end (current balance for this month).
+      const od = ds('owner_debt');
+      if (od) {
+        od.filter((r) => r.KIND === 'month_end' && ST[r.STATE] && mon(r.AS_OF) && mon(r.AS_OF) < curMo).forEach((r) => put('r28', ST[r.STATE], mon(r.AS_OF), +r.AMOUNT, 'Total owed by owners with a negative balance at month end', 'AppFolio'));
+        Object.entries(ST).forEach(([s, mk]) => { const cur = od.filter((r) => r.KIND === 'current' && r.STATE === s); if (cur.length || od.some((r) => r.KIND === 'current')) put('r28', mk, curMo, cur.reduce((x, r) => x + (+r.AMOUNT || 0), 0), 'Total owed by owners with a negative balance right now', 'AppFolio'); });
+      }
+      // r47 Doors closed: rental doors whose management started in the month (HOAs not counted).
+      const pr = ds('props');
+      if (pr) {
+        const g = new Map(); pr.filter((p) => !/^hoa$/i.test(p.TYPE || '') && ST[p.STATE] && mon(p.START)).forEach((p) => { const k = ST[p.STATE] + '|' + mon(p.START); g.set(k, (g.get(k) || 0) + (+p.UNITS || 0)); });
+        Object.values(ST).forEach((mk) => { for (let mo = 1; mo <= curMo; mo++) put('r47', mk, mo, g.get(mk + '|' + mo) || 0, 'Rental doors whose management started this month', 'AppFolio'); });
+      }
+      // r49 Rent ready to market: average days from rent-ready to the listing going live.
+      const li = ds('listings');
+      if (li) each(li.filter((r) => ST[r.STATE] && r.RENT_READY && r.LISTED && mon(r.LISTED) && T(r.LISTED) >= T(r.RENT_READY)).map((r) => ({ k: ST[r.STATE] + '|' + mon(r.LISTED), v: (T(r.LISTED) - T(r.RENT_READY)) / 86400000 })),
+        (mk, mo, v) => put('r49', mk, mo, avg(v), 'Average days from rent-ready to listed', 'AppFolio'));
+      // r53 / r55 / r57 Social posts, engagement growth (company-wide) and Google Business Profile clicks (by market), from Windsor.ai.
+      const so = ds('social');
+      if (so) {
+        const g = (metric, market) => new Map(so.filter((r) => r.METRIC === metric && r.MARKET === market && String(r.MONTH).startsWith(Y)).map((r) => [+String(r.MONTH).slice(5, 7), +r.VALUE]));
+        g('posts', 'Combined').forEach((v, mo) => put('r53', 'Combined', mo, v, 'Facebook posts across the Motion pages', 'Windsor.ai'));
+        const eng = g('engagements', 'Combined');
+        eng.forEach((v, mo) => { const p = eng.get(mo - 1); if (p) put('r55', 'Combined', mo, (v - p) / p, 'Change in Facebook engagements vs the month before', 'Windsor.ai'); });
+        ['Georgia', 'Tennessee', 'North Carolina'].forEach((mk) => g('gbp_clicks', mk).forEach((v, mo) => put('r57', mk, mo, v, 'Google Business Profile calls + website clicks', 'Windsor.ai')));
+      }
+      sys.rows = rows;
+    }
     window.mpDsTimes = Object.fromEntries(data.map((d) => [d.id, d.updated_at]));
     data.forEach((d) => {
       if (d.id === 'sc2026') {
