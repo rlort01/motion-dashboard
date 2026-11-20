@@ -49,6 +49,7 @@
     $('exCashRows').innerHTML = cash.filter((c) => c.BALANCE || c.KIND === 'operating').map((c) => '<tr><td>' + c.ACCOUNT + '</td><td>' + ({ operating: 'Company cash (counted)', property: 'Property operating (owner funds, not counted)', escrow: 'Deposit escrow (not counted)', other: 'Other company (not counted)', card: 'Credit card' }[c.KIND] || c.KIND) + '</td><td class="mp-num">' + money(c.BALANCE) + '</td></tr>').join('');
     drawProj(proj);
     drawPL();
+    renderAccts();
     // P&L table
     const pm = rows('pl_month');
     $('exPLRows').innerHTML = pm.slice().reverse().map((m) => '<tr><td>' + MON(m.MONTH) + (m.PARTIAL ? ' (' + m.PARTIAL + ')' : '') + '</td><td class="mp-num">' + money(m.INCOME) + '</td><td class="mp-num">' + money(m.COGS) + '</td><td class="mp-num">' + money(m.EXPENSES + (m.OTHER_EXP || 0) - (m.OTHER_INC || 0)) +
@@ -60,6 +61,47 @@
     $('exInRows').innerHTML = tbl(['Income']); $('exOutRows').innerHTML = tbl(['Cost of goods sold', 'Expenses', 'Other expenses']);
     const meta = rows('meta')[0] || {};
     $('exNote').textContent = 'Only you can see this tab. Cash from Ramp, profit & loss from QuickBooks (' + (meta.PL_PERIOD || '') + '), refreshed each morning' + (state.at ? '; last ' + d3.timeFormat('%b %-d, %-I:%M %p')(state.at) : '') + '. ' + (meta.NOTES || '');
+  };
+
+
+  // Runway by account, from Ramp daily balances (exec_data 'acct_daily': ACCOUNT, DATE, BAL).
+  // Property accounts cycle every month (rent in early, owner payouts mid-month), so the trend uses each
+  // month's average balance; the lowest balance shows how close the account came to zero.
+  const ACCTS = ['Motion PMG Operating', 'Georgia Operating', 'Tennessee Operating', 'North Carolina Operating'];
+  const renderAccts = () => {
+    const tb = $('exAcctRows'); if (!tb) return;
+    const daily = rows('acct_daily');
+    if (!daily.length) { tb.innerHTML = '<tr><td colspan="7">Balance history loads with the next morning refresh.</td></tr>'; $('exAcctSpark').replaceChildren(); return; }
+    const byAcct = d3.group(daily, (r) => r.ACCOUNT);
+    const out = ACCTS.filter((a) => byAcct.has(a)).map((a) => {
+      const pts = byAcct.get(a).map((r) => ({ d: new Date(r.DATE + 'T12:00:00'), v: +r.BAL })).sort((x, y) => x.d - y.d);
+      const last = pts[pts.length - 1], now = last.d;
+      // 30-day windows back from today: average balance in each.
+      const win = (k) => pts.filter((p) => p.d > d3.timeDay.offset(now, -30 * (k + 1)) && p.d <= d3.timeDay.offset(now, -30 * k));
+      const avgs = d3.range(0, 6).map((k) => d3.mean(win(k), (p) => p.v)).filter((v) => v !== undefined).reverse(); // oldest..newest
+      const trend = avgs.length >= 4 ? (avgs[avgs.length - 1] - avgs[avgs.length - 4]) / 3 : null; // per month, last 3 months
+      const low30 = d3.min(win(0), (p) => p.v), low90 = d3.min(pts.filter((p) => p.d > d3.timeDay.offset(now, -90)), (p) => p.v);
+      const runway = trend !== null && trend < 0 ? avgs[avgs.length - 1] / -trend : null;
+      return { a, cur: last.v, avg: avgs[avgs.length - 1], trend, low30, low90, runway, avgs, pts };
+    });
+    const rw = (r) => (r.trend === null ? 'Not enough history' : r.runway === null ? 'Not declining' : r.runway >= 24 ? '24+ months' : d3.format('.1f')(r.runway) + ' months');
+    tb.innerHTML = out.map((r) => '<tr><td>' + r.a + (r.a === 'Motion PMG Operating' ? ' <span class="mp-meta">(company cash)</span>' : '') + '</td><td class="mp-num">' + money(r.cur) + '</td><td class="mp-num">' + money(r.avg) +
+      '</td><td class="mp-num" style="color:' + (r.trend < 0 ? 'var(--color-bad)' : 'var(--color-ok)') + '">' + (r.trend === null ? '—' : (r.trend >= 0 ? '+' : '') + money(r.trend) + ' / mo') +
+      '</td><td class="mp-num"' + (r.low30 < 5000 ? ' style="color:var(--color-bad)"' : '') + '>' + money(r.low30) + '</td><td class="mp-num"' + (r.low90 < 5000 ? ' style="color:var(--color-bad)"' : '') + '>' + money(r.low90) +
+      '</td><td class="mp-num"' + (r.runway !== null && r.runway < 6 ? ' style="color:var(--color-bad);font-weight:600"' : '') + '>' + rw(r) + '</td></tr>').join('');
+    // Small multiples: daily balance, last 6 months.
+    const box = $('exAcctSpark'); box.replaceChildren();
+    out.forEach((r) => {
+      const card = document.createElement('div'); card.className = 'mp-exspark'; box.appendChild(card);
+      const h = document.createElement('div'); h.className = 'mp-meta'; h.textContent = r.a; card.appendChild(h);
+      const W = 280, H = 80, m = { t: 4, r: 4, b: 14, l: 4 };
+      const x = d3.scaleTime().domain(d3.extent(r.pts, (p) => p.d)).range([m.l, W - m.r]);
+      const y = d3.scaleLinear().domain([Math.min(0, d3.min(r.pts, (p) => p.v)), d3.max(r.pts, (p) => p.v)]).nice().range([H - m.b, m.t]);
+      const svg = d3.select(card).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', r.a + ' daily balance, last 6 months');
+      svg.append('path').datum(r.pts).attr('fill', 'var(--color-accent, #d4af37)').attr('opacity', 0.18).attr('d', d3.area().x((p) => x(p.d)).y0(y(0)).y1((p) => y(p.v)));
+      svg.append('path').datum(r.pts).attr('fill', 'none').attr('stroke', 'var(--color-accent, #d4af37)').attr('stroke-width', 1.5).attr('d', d3.line().x((p) => x(p.d)).y((p) => y(p.v)));
+      svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(6).tickSize(0).tickFormat(d3.timeFormat('%b'))).call((g) => g.select('.domain').remove());
+    });
   };
 
   const drawProj = (proj) => {

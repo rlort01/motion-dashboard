@@ -176,3 +176,7 @@ body.mp-noscroll { overflow: hidden; }
 .mp-wxsum { margin: 6px 0; font-size: 14px; }
 #mp-mapbox.mp-mapmax .mp-wxsum { margin: 0; }
 #goalsRows tr.mp-goal-changed td { background: rgba(252, 196, 25, .12); }
+
+.mp-exsparks { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 10px; }
+.mp-exspark svg { display: block; }
+.mp-exspark text { fill: var(--color-fg-muted); font-size: 10px; }

@@ -7,7 +7,7 @@
 <title>Motion Dashboard</title>
 <link rel="icon" href="rings.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Source+Sans+3:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=202611201603">
+<link rel="stylesheet" href="styles.css?v=202611201621">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -547,6 +547,10 @@
       <div class="mp-card"><h3 class="mp-h3">Ramp accounts</h3><div class="mp-wrap"><table class="mp-table"><thead><tr><th>Account</th><th>Type</th><th class="mp-num">Balance</th></tr></thead><tbody id="exCashRows"></tbody></table></div></div>
       <div class="mp-card"><h3 class="mp-h3">Income vs costs by month</h3><div id="exPL"></div><p class="mp-meta"><span style="color:var(--color-ok)">■</span> income <span style="color:var(--color-bad)">■</span> costs (COGS + expenses) <span style="color:#d4af37">●</span> net income</p></div>
     </div>
+    <div class="mp-card"><h3 class="mp-h3">Runway by operating account (Ramp balances)</h3>
+      <p class="mp-meta">State operating accounts fill up with rent early in the month and empty out with owner payouts around the 10th to 13th, so the trend compares each account's average balance over the last 30 days with three months earlier. Runway = average balance ÷ monthly decline, shown only when the account is trending down. The lowest balance shows how close the account came to zero (under $5,000 is red).</p>
+      <div class="mp-wrap"><table class="mp-table"><thead><tr><th>Account</th><th class="mp-num">Balance now</th><th class="mp-num">30-day average</th><th class="mp-num">Trend (3 months)</th><th class="mp-num">Lowest, 30 days</th><th class="mp-num">Lowest, 90 days</th><th class="mp-num">Runway</th></tr></thead><tbody id="exAcctRows"></tbody></table></div>
+      <div id="exAcctSpark" class="mp-exsparks"></div></div>
     <div class="mp-card"><h3 class="mp-h3">Profit &amp; loss by month (QuickBooks)</h3><p id="exPLSum"></p>
       <div class="mp-wrap"><table class="mp-table"><thead><tr><th>Month</th><th class="mp-num">Income</th><th class="mp-num">Cost of goods sold</th><th class="mp-num">Expenses</th><th class="mp-num">Net income</th><th class="mp-num">Margin</th></tr></thead><tbody id="exPLRows"></tbody></table></div></div>
     <div class="mp-two">
@@ -761,20 +765,20 @@
 </div>
 
 </div>
-<script src="dash.js?v=202611201603"></script>
-<script src="sc.js?v=202611201603"></script>
-<script src="app.js?v=202611201603"></script>
-<script src="ramp.js?v=202611201603"></script>
-<script src="companies.js?v=202611201603"></script>
-<script src="owners.js?v=202611201603"></script>
-<script src="reviews.js?v=202611201603"></script>
-<script src="portfolio.js?v=202611201603"></script>
-<script src="exec.js?v=202611201603"></script>
-<script src="goals.js?v=202611201603"></script>
-<script src="weather.js?v=202611201603"></script>
-  <script src="map.js?v=202611201603"></script>
-<script src="comms.js?v=202611201603"></script>
-<script src="entry.js?v=202611201603"></script>
-<script src="main.js?v=202611201603"></script>
+<script src="dash.js?v=202611201621"></script>
+<script src="sc.js?v=202611201621"></script>
+<script src="app.js?v=202611201621"></script>
+<script src="ramp.js?v=202611201621"></script>
+<script src="companies.js?v=202611201621"></script>
+<script src="owners.js?v=202611201621"></script>
+<script src="reviews.js?v=202611201621"></script>
+<script src="portfolio.js?v=202611201621"></script>
+<script src="exec.js?v=202611201621"></script>
+<script src="goals.js?v=202611201621"></script>
+<script src="weather.js?v=202611201621"></script>
+  <script src="map.js?v=202611201621"></script>
+<script src="comms.js?v=202611201621"></script>
+<script src="entry.js?v=202611201621"></script>
+<script src="main.js?v=202611201621"></script>
 </body>
 </html>
