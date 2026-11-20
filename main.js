@@ -25,6 +25,10 @@
     if (!data.length) { showLogin('Signed in, but no data is shared with this account. Use your @motionpmg.com, @motionpropertypreservation.com or @motionrealty.com email.'); return; }
     // Numbers typed on the "Enter numbers" tab take precedence over the workbook copy.
     const ent = await sb.from('scorecard_entries').select('metric_id,market,month,value').eq('year', 2026);
+    // Goals set on the Goals tab (admins only) override the workbook goals.
+    const gl = await sb.from('scorecard_goals').select('year,metric_id,goal,goal_text,dir,updated_by,updated_at');
+    window.mpGoals = gl.error ? [] : (gl.data || []);
+    if (window.mpIsAdmin === undefined) { const ad = await sb.rpc('is_app_admin'); window.mpIsAdmin = !ad.error && ad.data === true; }
     // Leads to showings refreshes daily from Tenant Turner (tt_funnel), ahead of the Monday copy in sys2026.
     const tt = data.find((d) => d.id === 'tt_funnel'), sys = data.find((d) => d.id === 'sys2026');
     if (tt && sys && tt.rows && sys.rows) {
@@ -165,6 +169,8 @@
         // Retired metrics: search ranking and NPS (not tracked)
         const DROP = new Set(['r56', 'r58']);
         d.rows = d.rows.filter((r) => !DROP.has(r.ID));
+        const g26 = new Map(window.mpGoals.filter((g) => g.year === 2026).map((g) => [g.metric_id, g]));
+        if (g26.size) d.rows = d.rows.map((r) => { const g = g26.get(r.ID); return g ? Object.assign({}, r, { GOAL: g.goal === null ? '' : String(g.goal), GOAL_TEXT: g.goal_text || (g.goal === null ? '' : String(g.goal)), DIR: g.dir }) : r; });
         window.mpWorkbook = d.rows;
         if (!ent.error && ent.data && ent.data.length) {
           const rows = d.rows.map((r) => Object.assign({}, r));
@@ -181,6 +187,7 @@
       dash._setDataset(d.id, 'ok', d.rows);
     });
     if (window.mpEntry) window.mpEntry.load();
+    if (window.mpGoalsPage) window.mpGoalsPage.render();
     if (!window.mpDiagSent) { window.mpDiagSent = true; setTimeout(sendDiag, 6000); }
     updated = new Date(d3.max(data, (d) => new Date(d.updated_at)));
     dash._redraw();

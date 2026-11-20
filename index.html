@@ -7,7 +7,7 @@
 <title>Motion Dashboard</title>
 <link rel="icon" href="rings.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Source+Sans+3:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=202611201529">
+<link rel="stylesheet" href="styles.css?v=202611201542">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -67,6 +67,7 @@
     <button class="mp-tab" role="tab" data-tab="map" aria-selected="false">Map</button>
     <button class="mp-tab" role="tab" data-tab="comms" aria-selected="false">Communications</button>
     <button class="mp-tab" role="tab" data-tab="entry" aria-selected="false">Enter numbers</button>
+    <button class="mp-tab" role="tab" data-tab="goals" aria-selected="false">Goals</button>
     <button class="mp-tab" role="tab" data-tab="sources" aria-selected="false">Data sources &amp; checks</button>
   </div>
 
@@ -526,6 +527,17 @@
     </div>
   </section>
 
+  <section id="goals" data-section hidden>
+    <p class="mp-note" id="goalsNote">Scorecard goals by year. Admins can change them; everyone else can see them. Every change is saved with who made it and when.</p>
+    <div class="mp-chips" style="align-items:center">
+      <label>Year <select class="dash-select" id="goalsYear"><option>2026</option><option>2027</option></select></label>
+      <button class="mp-chip" id="goalsCopy" hidden>Fill empty goals from the year before</button>
+      <button class="mp-chip mp-mapfull" id="goalsSave" hidden>Save goal changes</button>
+      <span class="mp-meta" id="goalsMsg"></span>
+    </div>
+    <div class="mp-wrap"><table class="mp-table"><thead><tr><th>Metric</th><th>Unit</th><th>Better when</th><th>Goal</th><th>Goal shown as (optional)</th><th>Last changed</th></tr></thead><tbody id="goalsRows"><tr><td>Loading…</td></tr></tbody></table></div>
+  </section>
+
   <section id="entry" data-section hidden>
     <p class="mp-note">Type each month's numbers here instead of in the scorecard spreadsheet. Pick the market and month, fill in the boxes, and save. Metrics the systems fill in automatically are shown but can't be typed over. Type percentages as plain numbers (12.5 means 12.5%). Every save records who entered it and when.</p>
     <div class="mp-bar">
@@ -721,18 +733,19 @@
 </div>
 
 </div>
-<script src="dash.js?v=202611201529"></script>
-<script src="sc.js?v=202611201529"></script>
-<script src="app.js?v=202611201529"></script>
-<script src="ramp.js?v=202611201529"></script>
-<script src="companies.js?v=202611201529"></script>
-<script src="owners.js?v=202611201529"></script>
-<script src="reviews.js?v=202611201529"></script>
-<script src="portfolio.js?v=202611201529"></script>
-<script src="weather.js?v=202611201529"></script>
-  <script src="map.js?v=202611201529"></script>
-<script src="comms.js?v=202611201529"></script>
-<script src="entry.js?v=202611201529"></script>
-<script src="main.js?v=202611201529"></script>
+<script src="dash.js?v=202611201542"></script>
+<script src="sc.js?v=202611201542"></script>
+<script src="app.js?v=202611201542"></script>
+<script src="ramp.js?v=202611201542"></script>
+<script src="companies.js?v=202611201542"></script>
+<script src="owners.js?v=202611201542"></script>
+<script src="reviews.js?v=202611201542"></script>
+<script src="portfolio.js?v=202611201542"></script>
+<script src="goals.js?v=202611201542"></script>
+<script src="weather.js?v=202611201542"></script>
+  <script src="map.js?v=202611201542"></script>
+<script src="comms.js?v=202611201542"></script>
+<script src="entry.js?v=202611201542"></script>
+<script src="main.js?v=202611201542"></script>
 </body>
 </html>

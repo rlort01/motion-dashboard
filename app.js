@@ -296,7 +296,7 @@
   };
   document.querySelectorAll('.mp-tab').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
   const h = (location.hash || '').slice(1);
-  if (['scorecard', 'workorders', 'billing', 'comms', 'portfolio', 'map'].includes(h)) showTab(h);
+  if (['scorecard', 'workorders', 'billing', 'comms', 'portfolio', 'map', 'goals', 'entry'].includes(h)) showTab(h);
 
   window.mpView = { wo: 'all', inv: 'attention', gap: 'V' };
   const chipGroup = (attr, key, draw) => {
