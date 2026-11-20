@@ -3,7 +3,12 @@
   const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const mk = () => (MARKETS.includes(dash.params().market) ? dash.params().market : 'Combined');
-  const mon = () => { const m = +dash.params().scMonth; return m >= 1 && m <= 12 ? m : 11; };
+  const yr = () => +dash.params().scYear || 2026;
+  const full = () => String(dash.params().scMonth) === '0';
+  // Last month with data in the chosen year: the current month this year, December for past years.
+  const lastMo = () => { const n = new Date(); return yr() === n.getFullYear() ? n.getMonth() + 1 : yr() < n.getFullYear() ? 12 : 1; };
+  const mon = () => { const m = +dash.params().scMonth; return m >= 1 && m <= 12 ? m : full() ? lastMo() : 11; };
+  window.mpScPeriod = () => (full() ? 'Full year ' + yr() : MONTHS_LONG[mon() - 1] + ' ' + yr());
 
   const fmtVal = (v, unit) => {
     if (v === null || v === undefined || v === '' || !isFinite(v)) return '—';
@@ -72,7 +77,7 @@
     inputs: ['sc2026', 'scMarket'],
     fn: (sc, mkt) => {
       const src = new Map(mkt.map((r) => [r.key, r.SRC]));
-      const m = +dash.params().scMonth >= 1 ? +dash.params().scMonth : 11;
+      const isFull = full(), m = mon();
       const meta = new Map();
       sc.forEach((r) => { if (!meta.has(r.ID)) meta.set(r.ID, r); });
       const byKey = new Map(mkt.map((r) => [r.key, r.VALUE]));
@@ -83,10 +88,24 @@
         const prior = m > 1 && byKey.has(id + '|' + (m - 1)) ? byKey.get(id + '|' + (m - 1)) : null;
         const ytdVals = d3.range(1, m + 1).map((i) => byKey.get(id + '|' + i)).filter((x) => x !== null && x !== undefined);
         const ytd = id === 'eom_doors' || id === 'eom_units' ? v : ytdVals.length ? (r.AGG === 'sum' ? d3.sum(ytdVals) : d3.mean(ytdVals)) : null;
+        const meets = (x) => (r.DIR === 'H' ? x >= goal : x <= goal);
         let status = '';
-        if (v !== null && goal !== null && r.DIR !== 'N') status = (r.DIR === 'H' ? v >= goal : v <= goal) ? 'On target' : 'Off target';
+        if (!isFull) {
+          if (v !== null && goal !== null && r.DIR !== 'N') status = meets(v) ? 'On target' : 'Off target';
+          out.push({ ID: id, SECTION: r.SECTION, METRIC: r.METRIC, goal, goalText: r.GOAL_TEXT, unit: r.UNIT, owner: r.OWNER, dir: r.DIR, agg: r.AGG,
+            value: v, source: src.get(id + '|' + m) || '', prior, ytd: ytd === null ? null : Math.round(ytd * 10000) / 10000, status });
+          return;
+        }
+        // Full year: the year total (counts, dollars) or average (rates, times); door counts at the latest month.
+        // Status compares the monthly average with the monthly goal, and counts how many months met it.
+        const yv = ytd === null ? null : Math.round(ytd * 10000) / 10000;
+        const cmp = yv === null ? null : (r.AGG === 'sum' && id !== 'eom_doors' && id !== 'eom_units' ? yv / ytdVals.length : yv);
+        if (cmp !== null && goal !== null && r.DIR !== 'N') status = meets(cmp) ? 'On target' : 'Off target';
+        const scored = goal !== null && r.DIR !== 'N' ? ytdVals : [];
+        const srcs = Array.from(new Set(d3.range(1, m + 1).map((i) => src.get(id + '|' + i)).filter(Boolean)));
         out.push({ ID: id, SECTION: r.SECTION, METRIC: r.METRIC, goal, goalText: r.GOAL_TEXT, unit: r.UNIT, owner: r.OWNER, dir: r.DIR, agg: r.AGG,
-          value: v, source: src.get(id + '|' + m) || '', prior, ytd: ytd === null ? null : Math.round(ytd * 10000) / 10000, status });
+          value: yv, prior: null, ytd: v, monthsOn: scored.filter(meets).length, monthsScored: scored.length,
+          source: srcs.length === 1 ? srcs[0] : srcs.length ? 'Mixed' : '', status });
       });
       return out;
     }
@@ -164,9 +183,16 @@
   dash.draw('monthSel', (sel) => {
     const d = dash.data('sc2026');
     const months = d.status === 'ok' ? Array.from(new Set(d.data.map((r) => +r.MONTH))).sort((a, b) => b - a) : [];
-    sel.replaceChildren(...months.map((m) => new Option(MONTHS_LONG[m - 1] + ' 2026', String(m))));
-    sel.value = String(mon());
+    sel.replaceChildren(new Option('Full year ' + yr(), '0'), ...months.map((m) => new Option(MONTHS_LONG[m - 1] + ' ' + yr(), String(m))));
+    sel.value = full() ? '0' : String(mon());
     sel.onchange = () => dash.setParams({ scMonth: +sel.value });
+  });
+  // Years with scorecard data (2026 today; a new year appears once its scorecard is set up).
+  dash.draw('yearSel', (sel) => {
+    const years = [2026];
+    sel.replaceChildren(...years.map((y) => new Option(String(y), String(y))));
+    sel.value = String(yr());
+    sel.onchange = () => dash.setParams({ scYear: +sel.value });
   });
 
   dash.draw('takeaway', (el) => {
@@ -176,7 +202,7 @@
     const on = scored.filter((r) => r.status === 'On target');
     const keyOff = ['r18', 'r22', 'r14', 'r30', 'r32', 'r47', 'r23', 'r13'].map((id) => t.find((r) => r.ID === id)).filter((r) => r && r.status === 'Off target');
     const who = mk() === 'Combined' ? 'Across all markets' : mk();
-    el.textContent = who + ', ' + MONTHS_LONG[mon() - 1] + ' 2026: ' + on.length + ' of ' + scored.length + ' scored metrics met their 2026 goal.' +
+    el.textContent = who + ', ' + (full() ? 'full year ' + yr() + ' (through ' + MONTHS_LONG[mon() - 1] + ')' : MONTHS_LONG[mon() - 1] + ' ' + yr()) + ': ' + on.length + ' of ' + scored.length + ' scored metrics met their 2026 goal.' +
       (keyOff.length ? ' Off target: ' + keyOff.slice(0, 4).map((r) => r.METRIC.replace(/\s*\(.*\)/, '').toLowerCase() + ' (' + fmtVal(r.value, r.unit) + ')').join(', ') + '.' : '');
   });
 
@@ -192,6 +218,7 @@
     el.appendChild(g);
     if (r.source && r.source !== 'Entered' && r.source !== 'Mixed') { const sp = document.createElement('span'); sp.textContent = ' · from ' + r.source; el.appendChild(sp); }
     if (r.status) { const p = document.createElement('span'); p.className = 'mp-pill ' + (r.status === 'On target' ? 'mp-ok' : 'mp-bad mp-flash'); p.textContent = r.status; p.style.marginLeft = '6px'; el.appendChild(p); }
+    if (full() && r.monthsScored) { const c = document.createElement('div'); c.textContent = r.monthsOn + ' of ' + r.monthsScored + ' months on target'; el.appendChild(c); }
     if (r.value !== null && r.prior !== null) {
       const d = r.value - r.prior;
       const c = document.createElement('div');
@@ -225,15 +252,16 @@
       tr.onclick = () => { dash.setParams({ metric: r.ID }); const c = document.getElementById('sc-chart-card'); if (c && c.scrollIntoView) c.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); };
       tr.onkeydown = (e) => { if (e.key === 'Enter') tr.onclick(); };
       td(tr, r.METRIC); td(tr, r.goal !== null ? fmtGoal(r) : r.goalText); td(tr, r.owner);
-      td(tr, fmtVal(r.value, r.unit), 'mp-num'); td(tr, fmtVal(r.prior, r.unit), 'mp-num'); td(tr, fmtVal(r.ytd, r.unit), 'mp-num');
+      td(tr, fmtVal(r.value, r.unit), 'mp-num'); td(tr, full() ? (r.monthsScored ? r.monthsOn + ' of ' + r.monthsScored : '—') : fmtVal(r.prior, r.unit), 'mp-num'); td(tr, fmtVal(r.ytd, r.unit), 'mp-num');
       const s = td(tr, ''); if (r.status) { const p = document.createElement('span'); p.className = 'mp-pill ' + (r.status === 'On target' ? 'mp-ok' : 'mp-bad mp-flash'); p.textContent = r.status; s.appendChild(p); }
       const auto = r.source && r.source !== 'Entered' && r.source !== 'Mixed';
       const so = td(tr, auto ? r.source + ' (auto)' : r.source === 'Mixed' ? 'Auto + entered' : r.source === 'Entered' ? 'Entered' : ''); if (auto) so.style.color = 'var(--color-ok)';
       tb.appendChild(tr);
     });
   });
-  dash.draw('monthHead', (th) => { th.textContent = MONTHS[mon() - 1]; });
-  dash.draw('priorHead', (th) => { th.textContent = mon() > 1 ? MONTHS[mon() - 2] : 'Prior'; });
+  dash.draw('monthHead', (th) => { th.textContent = full() ? yr() + ' year' : MONTHS[mon() - 1]; });
+  dash.draw('priorHead', (th) => { th.textContent = full() ? 'Months on target' : mon() > 1 ? MONTHS[mon() - 2] : 'Prior'; });
+  dash.draw('ytdHead', (th) => { th.textContent = full() ? 'Latest (' + MONTHS[mon() - 1] + ')' : yr() + ' YTD'; });
 
   dash.draw('chartTitle', (el) => {
     const t = rowsOf('scTable'); const r = t && t.find((x) => x.ID === (dash.params().metric || 'r18'));

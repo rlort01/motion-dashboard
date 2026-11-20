@@ -7,7 +7,7 @@
 <title>Motion Dashboard</title>
 <link rel="icon" href="rings.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Source+Sans+3:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=202611201504">
+<link rel="stylesheet" href="styles.css?v=202611201529">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -53,7 +53,8 @@
       <select class="dash-select" data-draw="marketSel" aria-label="Market"></select>
     </label>
     <label>Month
-      <select class="dash-select" data-draw="monthSel" aria-label="Month" data-source="sc2026"></select>
+      <select class="dash-select" data-draw="yearSel" aria-label="Year" data-source="sc2026"></select>
+      <select class="dash-select" data-draw="monthSel" aria-label="Month or full year" data-source="sc2026"></select>
     </label>
   </div>
 
@@ -123,49 +124,49 @@
     <h2 class="mp-h2" id="sec-tenant-and-owner-communications">Tenant and owner communications</h2>
     <div class="mp-wrap">
       <table class="mp-table" data-source="scTable" data-row-key="ID">
-        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
+        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd" data-draw="ytdHead">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
         <tbody data-draw="scSection" data-section="Tenant/Owner Comms"></tbody>
       </table>
     </div>
     <h2 class="mp-h2" id="sec-leasing">Leasing</h2>
     <div class="mp-wrap">
       <table class="mp-table" data-source="scTable" data-row-key="ID">
-        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
+        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd" data-draw="ytdHead">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
         <tbody data-draw="scSection" data-section="Leasing Services"></tbody>
       </table>
     </div>
     <h2 class="mp-h2" id="sec-finance">Finance</h2>
     <div class="mp-wrap">
       <table class="mp-table" data-source="scTable" data-row-key="ID">
-        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
+        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd" data-draw="ytdHead">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
         <tbody data-draw="scSection" data-section="Finance"></tbody>
       </table>
     </div>
     <h2 class="mp-h2" id="sec-inspection-and-maintenance">Inspection and maintenance</h2>
     <div class="mp-wrap">
       <table class="mp-table" data-source="scTable" data-row-key="ID">
-        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
+        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd" data-draw="ytdHead">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
         <tbody data-draw="scSection" data-section="Inspection &amp; Maintenance Services"></tbody>
       </table>
     </div>
     <h2 class="mp-h2" id="sec-rehab">Rehab</h2>
     <div class="mp-wrap">
       <table class="mp-table" data-source="scTable" data-row-key="ID">
-        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
+        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd" data-draw="ytdHead">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
         <tbody data-draw="scSection" data-section="Rehab Services"></tbody>
       </table>
     </div>
     <h2 class="mp-h2" id="sec-sales-and-marketing">Sales and marketing</h2>
     <div class="mp-wrap">
       <table class="mp-table" data-source="scTable" data-row-key="ID">
-        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
+        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd" data-draw="ytdHead">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
         <tbody data-draw="scSection" data-section="Sales and Marketing"></tbody>
       </table>
     </div>
     <h2 class="mp-h2" id="sec-door-counts">Door counts</h2>
     <div class="mp-wrap">
       <table class="mp-table" data-source="scTable" data-row-key="ID">
-        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
+        <thead><tr><th data-field="METRIC">Metric</th><th data-field="goal">2026 goal</th><th data-field="owner">Owner</th><th class="mp-num" data-field="value" data-draw="monthHead">—</th><th class="mp-num" data-field="prior" data-draw="priorHead">—</th><th class="mp-num" data-field="ytd" data-draw="ytdHead">2026 YTD</th><th data-field="status">Status</th><th data-field="source">Source</th></tr></thead>
         <tbody data-draw="scSection" data-section="Portfolio"></tbody>
       </table>
     </div>
@@ -625,7 +626,7 @@
     <ul>
       <li>Scorecard figures come from AppFolio where it has the metric (marked AppFolio), and otherwise from the 2026 scorecard workbook. Goals are the 2026 goals on that workbook.</li>
       <li>Combined markets: counts and dollar amounts (doors, owner debt, credits, doors closed, reviews) are summed across Georgia, Tennessee and North Carolina. Rates and times are averaged, weighted by each market's end-of-month doors where all three are entered.</li>
-      <li>2026 YTD is the average of the months entered so far for rates and times, and the total for counts and dollar amounts.</li>
+      <li>2026 YTD is the average of the months entered so far for rates and times, and the total for counts and dollar amounts. Choose <strong>Full year</strong> in the month list to see the whole year: the year total or average, how many months met the goal, and the latest month. In full-year view, counts and dollar goals are compared using the monthly average.</li>
       <li>Insurance compliance entered as whole numbers (for example 96.83 in Georgia for September to November) is read as a percentage.</li>
       <li>AppFolio data is refreshed every Monday morning. Jobber jobs and invoices refresh hourly on weekdays.</li>
     </ul>
@@ -720,18 +721,18 @@
 </div>
 
 </div>
-<script src="dash.js?v=202611201504"></script>
-<script src="sc.js?v=202611201504"></script>
-<script src="app.js?v=202611201504"></script>
-<script src="ramp.js?v=202611201504"></script>
-<script src="companies.js?v=202611201504"></script>
-<script src="owners.js?v=202611201504"></script>
-<script src="reviews.js?v=202611201504"></script>
-<script src="portfolio.js?v=202611201504"></script>
-<script src="weather.js?v=202611201504"></script>
-  <script src="map.js?v=202611201504"></script>
-<script src="comms.js?v=202611201504"></script>
-<script src="entry.js?v=202611201504"></script>
-<script src="main.js?v=202611201504"></script>
+<script src="dash.js?v=202611201529"></script>
+<script src="sc.js?v=202611201529"></script>
+<script src="app.js?v=202611201529"></script>
+<script src="ramp.js?v=202611201529"></script>
+<script src="companies.js?v=202611201529"></script>
+<script src="owners.js?v=202611201529"></script>
+<script src="reviews.js?v=202611201529"></script>
+<script src="portfolio.js?v=202611201529"></script>
+<script src="weather.js?v=202611201529"></script>
+  <script src="map.js?v=202611201529"></script>
+<script src="comms.js?v=202611201529"></script>
+<script src="entry.js?v=202611201529"></script>
+<script src="main.js?v=202611201529"></script>
 </body>
 </html>

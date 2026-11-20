@@ -7,13 +7,13 @@
   const raw = new Map();      // id -> { status, data, error }
   let cache = new Map();      // computed results for loaders and calcs
   const PKEY = 'motion-dash-params';
-  const DEFAULTS = { market: 'Combined', metric: 'r18', month: '2026-11', scMonth: 11, company: 'pmg' };
+  const DEFAULTS = { market: 'Combined', metric: 'r18', month: '2026-11', scMonth: 11, scYear: 2026, company: 'pmg' };
 
   const readParams = () => {
     let p = {};
     try { p = JSON.parse(localStorage.getItem(PKEY) || '{}'); } catch (e) { p = {}; }
     const q = new URLSearchParams(location.search);
-    ['market', 'metric', 'month', 'scMonth', 'company'].forEach((k) => { if (q.has(k)) p[k] = q.get(k); });
+    ['market', 'metric', 'month', 'scMonth', 'scYear', 'company'].forEach((k) => { if (q.has(k)) p[k] = q.get(k); });
     if (q.get('tv') !== null || location.pathname.endsWith('/tv') || location.pathname.endsWith('/tv/')) p.company = 'tv';
     return Object.assign({}, DEFAULTS, p);
   };
