@@ -30,13 +30,13 @@
 
   const render = () => {
     if (!state.data) return;
-    const cash = rows('cash'), op = d3.sum(cash.filter((c) => c.KIND === 'operating'), (c) => c.BALANCE), esc = d3.sum(cash.filter((c) => c.KIND === 'escrow'), (c) => c.BALANCE);
+    const cash = rows('cash'), op = d3.sum(cash.filter((c) => c.KIND === 'operating'), (c) => c.BALANCE), held = d3.sum(cash.filter((c) => c.KIND === 'escrow' || c.KIND === 'property'), (c) => c.BALANCE);
     const rr = runRate(state.basis), weekly = rr ? rr.net * 12 / 52 : 0;
     const proj = d3.range(0, 14).map((w) => ({ w, cash: op + weekly * w }));
     const low = d3.min(proj, (p) => p.cash), end = proj[13].cash;
     const runway = weekly < 0 ? op / (-rr.net) : null;
     $('exCash').textContent = money(op);
-    $('exCashN').textContent = 'Ramp operating accounts. Escrow (tenant deposits, not ours to spend): ' + money(esc) + '.';
+    $('exCashN').textContent = 'Motion PMG Operating only. Held for owners and tenants (property operating accounts and deposit escrow, not counted): ' + money(held) + '.';
     $('exNet').textContent = money(rr && rr.net) + ' / mo';
     $('exNetN').textContent = 'Average of ' + (rr ? rr.months.map((m) => MON(m.MONTH).slice(0, 3)).join(', ') : '—') + ': ' + money(rr && rr.inc) + ' in, ' + money(rr && rr.out) + ' out.';
     $('exEnd').textContent = money(end);
@@ -46,7 +46,7 @@
     ['exRun'].forEach((id) => { $(id).style.color = runway !== null && runway < 6 ? 'var(--color-bad)' : ''; });
     $('exEnd').style.color = end < op ? 'var(--color-bad)' : 'var(--color-ok)';
     // Cash accounts table
-    $('exCashRows').innerHTML = cash.filter((c) => c.BALANCE || c.KIND === 'operating').map((c) => '<tr><td>' + c.ACCOUNT + '</td><td>' + ({ operating: 'Operating', escrow: 'Escrow (held for others)', card: 'Credit card' }[c.KIND] || c.KIND) + '</td><td class="mp-num">' + money(c.BALANCE) + '</td></tr>').join('');
+    $('exCashRows').innerHTML = cash.filter((c) => c.BALANCE || c.KIND === 'operating').map((c) => '<tr><td>' + c.ACCOUNT + '</td><td>' + ({ operating: 'Company cash (counted)', property: 'Property operating (owner funds, not counted)', escrow: 'Deposit escrow (not counted)', other: 'Other company (not counted)', card: 'Credit card' }[c.KIND] || c.KIND) + '</td><td class="mp-num">' + money(c.BALANCE) + '</td></tr>').join('');
     drawProj(proj);
     drawPL();
     // P&L table
