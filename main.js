@@ -186,7 +186,7 @@
     dash._redraw();
   };
 
-  window.mpReloadData = () => load();
+  window.mpReloadData = () => safeLoad();
   // One small health report per visit, so display problems on other computers can be diagnosed.
   const sendDiag = async () => {
     try {
@@ -206,12 +206,29 @@
         tab: location.hash || '#scorecard',
         // Blank or placeholder drawings per tab, to find what didn't show after a refresh.
         blanks: Object.fromEntries(q('[data-section]').map((s) => [s.id, q('#' + s.id + ' [data-draw]').filter((e) => /^(|—|no data)$/.test(e.textContent.trim())).map((e) => e.getAttribute('data-draw')).slice(0, 25)])),
-        loadMs: window.mpLoadMs || null
+        loadMs: window.mpLoadMs || null,
+        loaded: loadedOnce
       };
       await sb.from('client_diagnostics').insert({ kind: 'load', detail });
     } catch (e) { /* diagnostics must never break the page */ }
   };
-  const showApp = () => { login.hidden = true; app.hidden = false; load(); };
+  // Load outside the sign-in callback: calling Supabase from inside onAuthStateChange can deadlock while the
+  // sign-in token is being renewed (it happened after a refresh), leaving every table empty.
+  let loading = null, loadedOnce = false;
+  const safeLoad = () => {
+    if (loading) return loading;
+    loading = Promise.race([load().then(() => { loadedOnce = true; }), new Promise((_, no) => setTimeout(() => no(new Error('timeout')), 20000))])
+      .catch((e) => { (window.mpErrors = window.mpErrors || []).push('load: ' + (e && e.message)); })
+      .finally(() => { loading = null; });
+    return loading;
+  };
+  // If the first load stalls, try again a few times, then report it.
+  const watchdog = (n) => setTimeout(async () => {
+    if (loadedOnce || !shown) return;
+    if (n < 3) { await sb.auth.refreshSession().catch(() => {}); safeLoad(); watchdog(n + 1); }
+    else if (!window.mpDiagSent) { window.mpDiagSent = true; sendDiag(); }
+  }, 8000);
+  const showApp = () => { login.hidden = true; app.hidden = false; setTimeout(safeLoad, 0); watchdog(0); };
   const showLogin = (text) => { app.hidden = true; login.hidden = false; msg.textContent = text || ''; };
 
   $('loginForm').addEventListener('submit', async (ev) => {
@@ -237,5 +254,5 @@
     else { shown = false; showLogin(msg.textContent); }
   });
   // Pick up fresh data every 15 minutes without a reload.
-  setInterval(() => { if (shown) load(); }, 15 * 60 * 1000);
+  setInterval(() => { if (shown) safeLoad(); }, 15 * 60 * 1000);
 })();
