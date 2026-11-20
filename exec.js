@@ -4,8 +4,9 @@
 (function () {
   const $ = (id) => document.getElementById(id);
   const money = (v) => (v == null || !isFinite(v) ? '—' : (v < 0 ? '-$' : '$') + d3.format(',.0f')(Math.abs(v)));
-  const state = { data: null, basis: 3, at: null };
+  const state = { data: null, basis: 'normal', at: null };
   const rows = (id) => (state.data && state.data[id]) || [];
+  const ord = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
   const MON = (m) => d3.timeFormat('%b %Y')(new Date(m + '-15T12:00:00'));
 
   const load = async () => {
@@ -21,8 +22,16 @@
   };
 
   // Run rate from the last N complete months of the P&L (cash in = income + other income; cash out = COGS + expenses + other).
+  // Known adjustments (exec_data 'adjust'): loan repayments that QuickBooks does not count as expenses,
+  // and one-time months to leave out of the "normal months" average.
+  const excluded = () => new Set(rows('adjust').filter((a) => a.KIND === 'exclude').flatMap((a) => a.MONTHS || []));
+  const loanFor = (ym) => d3.sum(rows('adjust').filter((a) => a.KIND === 'loan'), (a) => {
+    const [y0, m0] = a.START.split('-').map(Number), [y, m] = ym.split('-').map(Number), k = (y - y0) * 12 + (m - m0);
+    return k >= 0 && k < a.MONTHS ? a.AMOUNT : 0;
+  });
   const runRate = (n) => {
-    const full = rows('pl_month').filter((m) => !m.PARTIAL).slice(-n);
+    const all = rows('pl_month').filter((m) => !m.PARTIAL);
+    const full = n === 'normal' ? all.filter((m) => !excluded().has(m.MONTH)).slice(-6) : all.slice(-n);
     if (!full.length) return null;
     const inc = d3.mean(full, (m) => m.INCOME + (m.OTHER_INC || 0)), out = d3.mean(full, (m) => m.COGS + m.EXPENSES + (m.OTHER_EXP || 0));
     return { months: full, inc, out, net: inc - out };
@@ -32,17 +41,26 @@
     if (!state.data) return;
     const cash = rows('cash'), op = d3.sum(cash.filter((c) => c.KIND === 'operating'), (c) => c.BALANCE), held = d3.sum(cash.filter((c) => c.KIND === 'escrow' || c.KIND === 'property'), (c) => c.BALANCE);
     const rr = runRate(state.basis), weekly = rr ? rr.net * 12 / 52 : 0;
-    const proj = d3.range(0, 14).map((w) => ({ w, cash: op + weekly * w }));
+    // Each week: the run rate plus that week's share of any loan payment due in its month.
+    const today = new Date();
+    let c = op;
+    const proj = [{ w: 0, cash: op }];
+    // Loan payments land on their due day (e.g. the 23rd) in the week they fall.
+    const dueIn = (a, b) => d3.sum(rows('adjust').filter((x) => x.KIND === 'loan'), (x) => d3.timeDays(a, b).filter((d) => d.getDate() === (x.DAY || 1)).reduce((t, d) => t + (loanFor(d3.timeFormat('%Y-%m')(d)) ? x.AMOUNT : 0), 0));
+    d3.range(1, 14).forEach((w) => { const a = d3.timeDay.offset(today, 7 * (w - 1) + 1), b = d3.timeDay.offset(today, 7 * w + 1); c += weekly + dueIn(a, b); proj.push({ w, cash: c }); });
     const low = d3.min(proj, (p) => p.cash), end = proj[13].cash;
-    const runway = weekly < 0 ? op / (-rr.net) : null;
+    const loanNow = loanFor(d3.timeFormat('%Y-%m')(today)), monthly = (rr ? rr.net : 0) + loanNow;
+    const runway = monthly < 0 ? op / -monthly : null;
     $('exCash').textContent = money(op);
     $('exCashN').textContent = 'Motion PMG Operating only. Held for owners and tenants (property operating accounts and deposit escrow, not counted): ' + money(held) + '.';
-    $('exNet').textContent = money(rr && rr.net) + ' / mo';
-    $('exNetN').textContent = 'Average of ' + (rr ? rr.months.map((m) => MON(m.MONTH).slice(0, 3)).join(', ') : '—') + ': ' + money(rr && rr.inc) + ' in, ' + money(rr && rr.out) + ' out.';
+    $('exNet').textContent = money(monthly) + ' / mo';
+    $('exNetN').textContent = 'Average of ' + (rr ? rr.months.map((m) => MON(m.MONTH).slice(0, 3)).join(', ') : '—') + ': ' + money(rr && rr.inc) + ' in, ' + money(rr && rr.out) + ' out' +
+      (loanNow ? ', plus loan payment ' + money(loanNow) : '') + '.';
     $('exEnd').textContent = money(end);
-    $('exEndN').textContent = 'If the last ' + state.basis + ' months repeat. Lowest point ' + money(low) + '.';
+    $('exEndN').textContent = (state.basis === 'normal' ? 'If normal months repeat' : 'If the last ' + state.basis + ' months repeat') + ', after loan payments. Lowest point ' + money(low) + '.';
     $('exRun').textContent = runway === null ? 'Cash growing' : runway >= 24 ? '24+ months' : d3.format('.1f')(runway) + ' months';
-    $('exRunN').textContent = runway === null ? 'Average month is profitable, so cash is not being used up.' : 'Operating cash ÷ average monthly loss.';
+    $('exRunN').textContent = runway === null ? 'An average month adds cash, even after the loan payment.' : 'Company cash ÷ average monthly shortfall (including the loan payment).';
+    const adj = rows('adjust'); $('exAdj').innerHTML = adj.length ? 'Built into the projection: ' + adj.map((a) => a.KIND === 'loan' ? a.LABEL + ' ' + d3.format('$,.2f')(-a.AMOUNT) + ' on the ' + ord(a.DAY || 1) + ' of each month, ' + MON(a.START) + ' to ' + MON(d3.timeFormat('%Y-%m')(d3.timeMonth.offset(new Date(a.START + '-15T12:00:00'), a.MONTHS - 1))) : a.LABEL + ': ' + a.MONTHS.map((m) => MON(m).slice(0, 3)).join(', ') + ' left out of "Normal months"').join('; ') + '.' : '';
     ['exRun'].forEach((id) => { $(id).style.color = runway !== null && runway < 6 ? 'var(--color-bad)' : ''; });
     $('exEnd').style.color = end < op ? 'var(--color-bad)' : 'var(--color-ok)';
     // Cash accounts table
@@ -135,7 +153,7 @@
   };
 
   document.querySelectorAll('[data-exbasis]').forEach((b) => b.addEventListener('click', () => {
-    state.basis = +b.getAttribute('data-exbasis');
+    state.basis = b.getAttribute('data-exbasis') === 'normal' ? 'normal' : +b.getAttribute('data-exbasis');
     document.querySelectorAll('[data-exbasis]').forEach((x) => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
     render();
   }));
