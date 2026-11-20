@@ -7,7 +7,7 @@
 <title>Motion Dashboard</title>
 <link rel="icon" href="rings.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Source+Sans+3:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=202611201542">
+<link rel="stylesheet" href="styles.css?v=202611201556">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -68,6 +68,7 @@
     <button class="mp-tab" role="tab" data-tab="comms" aria-selected="false">Communications</button>
     <button class="mp-tab" role="tab" data-tab="entry" aria-selected="false">Enter numbers</button>
     <button class="mp-tab" role="tab" data-tab="goals" aria-selected="false">Goals</button>
+    <button class="mp-tab" role="tab" data-tab="exec" aria-selected="false" hidden>Executive</button>
     <button class="mp-tab" role="tab" data-tab="sources" aria-selected="false">Data sources &amp; checks</button>
   </div>
 
@@ -527,6 +528,33 @@
     </div>
   </section>
 
+  <section id="exec" data-section hidden>
+    <p class="mp-note" id="exNote">Loading…</p>
+    <div class="mp-grid" style="margin: var(--cds-gap-sm) 0 var(--cds-gap-md)">
+      <div class="mp-card"><h3>Operating cash now</h3><div class="mp-big" id="exCash">—</div><div class="mp-meta" id="exCashN"></div></div>
+      <div class="mp-card"><h3>Average monthly net</h3><div class="mp-big" id="exNet">—</div><div class="mp-meta" id="exNetN"></div></div>
+      <div class="mp-card"><h3>Projected cash in 13 weeks</h3><div class="mp-big" id="exEnd">—</div><div class="mp-meta" id="exEndN"></div></div>
+      <div class="mp-card"><h3>Runway</h3><div class="mp-big" id="exRun">—</div><div class="mp-meta" id="exRunN"></div></div>
+    </div>
+    <div class="mp-card"><h3 class="mp-h3">13-week cash projection</h3>
+      <div class="mp-chips" role="group" aria-label="Projection basis"><span class="mp-meta">Based on the average of the last</span>
+        <button class="mp-chip" data-exbasis="3" aria-pressed="true">3 months</button>
+        <button class="mp-chip" data-exbasis="6" aria-pressed="false">6 months</button>
+        <button class="mp-chip" data-exbasis="12" aria-pressed="false">12 months</button></div>
+      <div id="exProj"></div>
+      <p class="mp-meta">A run-rate projection: today's operating cash plus the average monthly net (income minus all costs) from the months chosen, spread by week. It does not yet include one-off items such as loan payments, distributions or a large bill you know is coming.</p></div>
+    <div class="mp-two">
+      <div class="mp-card"><h3 class="mp-h3">Cash by account (Ramp)</h3><div class="mp-wrap"><table class="mp-table"><thead><tr><th>Account</th><th>Type</th><th class="mp-num">Balance</th></tr></thead><tbody id="exCashRows"></tbody></table></div></div>
+      <div class="mp-card"><h3 class="mp-h3">Income vs costs by month</h3><div id="exPL"></div><p class="mp-meta"><span style="color:var(--color-ok)">■</span> income <span style="color:var(--color-bad)">■</span> costs (COGS + expenses) <span style="color:#d4af37">●</span> net income</p></div>
+    </div>
+    <div class="mp-card"><h3 class="mp-h3">Profit &amp; loss by month (QuickBooks)</h3><p id="exPLSum"></p>
+      <div class="mp-wrap"><table class="mp-table"><thead><tr><th>Month</th><th class="mp-num">Income</th><th class="mp-num">Cost of goods sold</th><th class="mp-num">Expenses</th><th class="mp-num">Net income</th><th class="mp-num">Margin</th></tr></thead><tbody id="exPLRows"></tbody></table></div></div>
+    <div class="mp-two">
+      <div class="mp-card"><h3 class="mp-h3">Biggest income lines (12 months)</h3><div class="mp-wrap"><table class="mp-table"><tbody id="exInRows"></tbody></table></div></div>
+      <div class="mp-card"><h3 class="mp-h3">Biggest cost lines (12 months)</h3><div class="mp-wrap"><table class="mp-table"><tbody id="exOutRows"></tbody></table></div></div>
+    </div>
+  </section>
+
   <section id="goals" data-section hidden>
     <p class="mp-note" id="goalsNote">Scorecard goals by year. Admins can change them; everyone else can see them. Every change is saved with who made it and when.</p>
     <div class="mp-chips" style="align-items:center">
@@ -733,19 +761,20 @@
 </div>
 
 </div>
-<script src="dash.js?v=202611201542"></script>
-<script src="sc.js?v=202611201542"></script>
-<script src="app.js?v=202611201542"></script>
-<script src="ramp.js?v=202611201542"></script>
-<script src="companies.js?v=202611201542"></script>
-<script src="owners.js?v=202611201542"></script>
-<script src="reviews.js?v=202611201542"></script>
-<script src="portfolio.js?v=202611201542"></script>
-<script src="goals.js?v=202611201542"></script>
-<script src="weather.js?v=202611201542"></script>
-  <script src="map.js?v=202611201542"></script>
-<script src="comms.js?v=202611201542"></script>
-<script src="entry.js?v=202611201542"></script>
-<script src="main.js?v=202611201542"></script>
+<script src="dash.js?v=202611201556"></script>
+<script src="sc.js?v=202611201556"></script>
+<script src="app.js?v=202611201556"></script>
+<script src="ramp.js?v=202611201556"></script>
+<script src="companies.js?v=202611201556"></script>
+<script src="owners.js?v=202611201556"></script>
+<script src="reviews.js?v=202611201556"></script>
+<script src="portfolio.js?v=202611201556"></script>
+<script src="exec.js?v=202611201556"></script>
+<script src="goals.js?v=202611201556"></script>
+<script src="weather.js?v=202611201556"></script>
+  <script src="map.js?v=202611201556"></script>
+<script src="comms.js?v=202611201556"></script>
+<script src="entry.js?v=202611201556"></script>
+<script src="main.js?v=202611201556"></script>
 </body>
 </html>
