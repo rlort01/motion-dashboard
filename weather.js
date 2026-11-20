@@ -58,7 +58,7 @@
     alertLayer.clearLayers();
     if (state.showAlerts) state.alerts.slice().reverse().forEach((a) => {
       if (!a.geom) return;
-      L.geoJSON(a.geom, { style: { color: COLOR[a.k], weight: 2, opacity: 0.9, fillColor: COLOR[a.k], fillOpacity: a.k === 'statement' ? 0.08 : 0.18, interactive: true } })
+      L.geoJSON(a.geom, { pane: 'wx', style: { color: COLOR[a.k], weight: 2, opacity: 0.9, fillColor: COLOR[a.k], fillOpacity: a.k === 'statement' ? 0.08 : 0.18, interactive: true } })
         .bindPopup('<strong>' + esc(a.event) + '</strong><br>' + esc(a.headline || '') + (a.ends ? '<br>Until ' + esc(fmt(a.ends)) : '') + '<br><small>' + esc((a.area || '').slice(0, 300)) + '</small>')
         .addTo(alertLayer);
     });
@@ -71,7 +71,7 @@
   window.addEventListener('mp-map-ready', () => {
     map = window.mpMap;
     map.createPane('wx'); map.getPane('wx').style.zIndex = 390; // under the property pins
-    alertLayer = L.layerGroup({ pane: 'wx' }).addTo(map);
+    alertLayer = L.layerGroup().addTo(map);
     radarLayer = L.tileLayer(RADAR, { opacity: 0.55, pane: 'wx', attribution: 'Radar: Iowa Environmental Mesonet / NWS' });
     refresh(); setInterval(refresh, 10 * 60 * 1000);
   });
