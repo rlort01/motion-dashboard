@@ -7,7 +7,7 @@
 <title>Motion Dashboard</title>
 <link rel="icon" href="rings.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Source+Sans+3:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=202611201435">
+<link rel="stylesheet" href="styles.css?v=202611201446">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -457,7 +457,10 @@
 
   <section id="map" data-section hidden>
     <p class="mp-note">Every property we manage, have onboarded or have offboarded since January 2025, updated each morning from AppFolio. Click a pin for details. Properties with issues flash: <strong>red</strong> = urgent work order open, <strong>yellow</strong> = a unit vacant 30+ days, <strong>orange</strong> = a work order open 30+ days (the most serious issue sets the color). Purple = HOA communities we manage (not counted as doors). Pins placed by ZIP code (address not matched) are hollow.</p>
+    <div id="mp-mapbox">
     <div class="mp-chips" role="group" aria-label="Show on map">
+      <button class="mp-chip mp-mapfull" id="map-full" aria-pressed="false" title="Show the map on the whole screen (Esc to close)">⛶ Full screen</button>
+      <a class="mp-chip" id="map-pop" href="?mapfull=1#map" target="_blank" rel="noopener" title="Open the map in its own browser window or tab">↗ Pop out</a>
       <button class="mp-chip" data-mapshow="current" aria-pressed="true">Managed now</button>
       <button class="mp-chip" data-mapshow="all" aria-pressed="false">Include offboarded</button>
       <button class="mp-chip" data-mapshow="offtarget" aria-pressed="false">Flashing (issues) only</button>
@@ -466,6 +469,7 @@
     </div>
     <div class="mp-maplegend" data-draw="mapLegend"></div>
     <div id="mp-map" data-draw="propMap"></div>
+    </div>
   </section>
 
   <section id="comms" data-section hidden>
@@ -709,17 +713,17 @@
 </div>
 
 </div>
-<script src="dash.js?v=202611201435"></script>
-<script src="sc.js?v=202611201435"></script>
-<script src="app.js?v=202611201435"></script>
-<script src="ramp.js?v=202611201435"></script>
-<script src="companies.js?v=202611201435"></script>
-<script src="owners.js?v=202611201435"></script>
-<script src="reviews.js?v=202611201435"></script>
-<script src="portfolio.js?v=202611201435"></script>
-<script src="map.js?v=202611201435"></script>
-<script src="comms.js?v=202611201435"></script>
-<script src="entry.js?v=202611201435"></script>
-<script src="main.js?v=202611201435"></script>
+<script src="dash.js?v=202611201446"></script>
+<script src="sc.js?v=202611201446"></script>
+<script src="app.js?v=202611201446"></script>
+<script src="ramp.js?v=202611201446"></script>
+<script src="companies.js?v=202611201446"></script>
+<script src="owners.js?v=202611201446"></script>
+<script src="reviews.js?v=202611201446"></script>
+<script src="portfolio.js?v=202611201446"></script>
+<script src="map.js?v=202611201446"></script>
+<script src="comms.js?v=202611201446"></script>
+<script src="entry.js?v=202611201446"></script>
+<script src="main.js?v=202611201446"></script>
 </body>
 </html>

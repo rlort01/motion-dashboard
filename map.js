@@ -63,6 +63,28 @@
       map = L.map(el, { scrollWheelZoom: true }).setView([34.4, -83.5], 7);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
       layer = L.layerGroup().addTo(map);
+      // Full screen and pop-out window.
+      const box = document.getElementById('mp-mapbox'), btn = document.getElementById('map-full');
+      const resize = () => setTimeout(() => { map.invalidateSize(); }, 80);
+      const setFull = (on) => {
+        box.classList.toggle('mp-mapmax', on); document.body.classList.toggle('mp-noscroll', on);
+        if (btn) { btn.setAttribute('aria-pressed', on ? 'true' : 'false'); btn.textContent = on ? '✕ Exit full screen' : '⛶ Full screen'; }
+        resize();
+      };
+      if (btn && !btn.dataset.wired) {
+        btn.dataset.wired = '1';
+        btn.addEventListener('click', async () => {
+          const on = !box.classList.contains('mp-mapmax');
+          setFull(on);
+          try {
+            if (on && box.requestFullscreen && !document.fullscreenElement) await box.requestFullscreen();
+            else if (!on && document.fullscreenElement) await document.exitFullscreen();
+          } catch (e) { /* the full-window view still works without browser full screen */ }
+        });
+        document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && box.classList.contains('mp-mapmax')) setFull(false); resize(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && box.classList.contains('mp-mapmax')) setFull(false); });
+        if (new URLSearchParams(location.search).get('mapfull') === '1') { setFull(true); const pop = document.getElementById('map-pop'); if (pop) pop.hidden = true; }
+      }
       window.addEventListener('mp-tab', (e) => { if (e.detail === 'map') setTimeout(() => { map.invalidateSize(); fit(); }, 50); });
     }
     layer.clearLayers();

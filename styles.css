@@ -163,3 +163,10 @@ tr.mp-entry-sec td { background: var(--m-navy); color: var(--m-beige); font-weig
 .mp-halo-fast { animation-duration: 1s; }
 @keyframes mp-halo { 0% { transform: scale(1); opacity: .6; } 100% { transform: scale(2.6); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .mp-halo { animation-duration: 3s; } }
+
+/* Map full screen / pop-out */
+#mp-mapbox.mp-mapmax { position: fixed; inset: 0; z-index: 2000; background: var(--cds-bg, #0b1426); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+#mp-mapbox.mp-mapmax #mp-map { flex: 1 1 auto; height: auto !important; min-height: 0; }
+#mp-mapbox:fullscreen { background: var(--cds-bg, #0b1426); }
+body.mp-noscroll { overflow: hidden; }
+.mp-chip.mp-mapfull { font-weight: 600; }
