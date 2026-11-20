@@ -7,7 +7,7 @@
 <title>Motion Dashboard</title>
 <link rel="icon" href="rings.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Source+Sans+3:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=202611201446">
+<link rel="stylesheet" href="styles.css?v=202611201454">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -467,9 +467,16 @@
       <button class="mp-chip" data-mapshow="changes" aria-pressed="false">Onboarded or leaving (90 days)</button>
       <a class="mp-chip" id="map-kml" href="#" download="motion-properties.kml">Download for Google My Maps</a>
     </div>
+    <div class="mp-chips" role="group" aria-label="Weather">
+      <button class="mp-chip" data-wx="showAlerts" aria-pressed="true">Weather alerts</button>
+      <button class="mp-chip" data-wx="showRadar" aria-pressed="false">Radar</button>
+      <span class="mp-wxkey"><i style="background:#e03131"></i>Warning <i style="background:#f76707"></i>Watch <i style="background:#f5c400"></i>Advisory <i style="background:#4dabf7"></i>Statement</span>
+    </div>
+    <div class="mp-wxsum" data-draw="wxSummary">Loading weather alerts…</div>
     <div class="mp-maplegend" data-draw="mapLegend"></div>
     <div id="mp-map" data-draw="propMap"></div>
     </div>
+    <div data-draw="wxTable"></div>
   </section>
 
   <section id="comms" data-section hidden>
@@ -713,17 +720,18 @@
 </div>
 
 </div>
-<script src="dash.js?v=202611201446"></script>
-<script src="sc.js?v=202611201446"></script>
-<script src="app.js?v=202611201446"></script>
-<script src="ramp.js?v=202611201446"></script>
-<script src="companies.js?v=202611201446"></script>
-<script src="owners.js?v=202611201446"></script>
-<script src="reviews.js?v=202611201446"></script>
-<script src="portfolio.js?v=202611201446"></script>
-<script src="map.js?v=202611201446"></script>
-<script src="comms.js?v=202611201446"></script>
-<script src="entry.js?v=202611201446"></script>
-<script src="main.js?v=202611201446"></script>
+<script src="dash.js?v=202611201454"></script>
+<script src="sc.js?v=202611201454"></script>
+<script src="app.js?v=202611201454"></script>
+<script src="ramp.js?v=202611201454"></script>
+<script src="companies.js?v=202611201454"></script>
+<script src="owners.js?v=202611201454"></script>
+<script src="reviews.js?v=202611201454"></script>
+<script src="portfolio.js?v=202611201454"></script>
+<script src="weather.js?v=202611201454"></script>
+  <script src="map.js?v=202611201454"></script>
+<script src="comms.js?v=202611201454"></script>
+<script src="entry.js?v=202611201454"></script>
+<script src="main.js?v=202611201454"></script>
 </body>
 </html>

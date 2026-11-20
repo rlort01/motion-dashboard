@@ -63,6 +63,7 @@
       map = L.map(el, { scrollWheelZoom: true }).setView([34.4, -83.5], 7);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
       layer = L.layerGroup().addTo(map);
+      window.mpMap = map; window.dispatchEvent(new CustomEvent('mp-map-ready'));
       // Full screen and pop-out window.
       const box = document.getElementById('mp-mapbox'), btn = document.getElementById('map-full');
       const resize = () => setTimeout(() => { map.invalidateSize(); }, 80);

@@ -170,3 +170,8 @@ tr.mp-entry-sec td { background: var(--m-navy); color: var(--m-beige); font-weig
 #mp-mapbox:fullscreen { background: var(--cds-bg, #0b1426); }
 body.mp-noscroll { overflow: hidden; }
 .mp-chip.mp-mapfull { font-weight: 600; }
+/* Weather overlay */
+.mp-wxkey { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; margin-left: 8px; }
+.mp-wxkey i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; opacity: .8; margin-left: 6px; }
+.mp-wxsum { margin: 6px 0; font-size: 14px; }
+#mp-mapbox.mp-mapmax .mp-wxsum { margin: 0; }
