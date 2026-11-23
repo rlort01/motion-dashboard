@@ -195,8 +195,9 @@
   };
 
   window.mpReloadData = () => safeLoad();
+  window.mpSendDiag = (kind) => sendDiag(kind);
   // One small health report per visit, so display problems on other computers can be diagnosed.
-  const sendDiag = async () => {
+  const sendDiag = async (kind) => {
     try {
       const q = (s) => Array.from(document.querySelectorAll(s));
       const st = (id) => dash.data(id).status;
@@ -213,11 +214,11 @@
         errors: (window.mpErrors || []).slice(0, 15),
         tab: location.hash || '#scorecard',
         // Blank or placeholder drawings per tab, to find what didn't show after a refresh.
-        blanks: Object.fromEntries(q('[data-section]').map((s) => [s.id, q('#' + s.id + ' [data-draw]').filter((e) => /^(|—|no data)$/.test(e.textContent.trim())).map((e) => e.getAttribute('data-draw')).slice(0, 25)])),
+        blanks: Object.fromEntries(q('[data-section]').map((s, i) => [s.id || 'section' + i, Array.from(s.querySelectorAll('[data-draw]')).filter((e) => /^(|—|no data)$/.test(e.textContent.trim())).map((e) => e.getAttribute('data-draw')).slice(0, 25)])),
         loadMs: window.mpLoadMs || null,
         loaded: loadedOnce
       };
-      await sb.from('client_diagnostics').insert({ kind: 'load', detail });
+      await sb.from('client_diagnostics').insert({ kind: typeof kind === 'string' ? kind : 'load', detail });
     } catch (e) { /* diagnostics must never break the page */ }
   };
   // Load outside the sign-in callback: calling Supabase from inside onAuthStateChange can deadlock while the

@@ -293,6 +293,13 @@
     document.querySelectorAll('.mp-tab').forEach((b) => b.setAttribute('aria-selected', b.dataset.tab === id ? 'true' : 'false'));
     dash.setLink(id);
     window.dispatchEvent(new CustomEvent('mp-tab', { detail: id }));
+    // Redraw when a tab is shown, so its tables are always built from the current data.
+    dash._redraw();
+    // If the scorecard still shows empty tables a moment later, send one report so the cause can be found.
+    if (id === 'scorecard') setTimeout(() => {
+      const bodies = Array.from(document.querySelectorAll('#scorecard tbody[data-draw=scSection]'));
+      if (bodies.length && bodies.every((t) => !t.children.length) && !window.mpBlankSent && window.mpSendDiag) { window.mpBlankSent = true; window.mpSendDiag('blank-after-tab'); }
+    }, 1500);
   };
   document.querySelectorAll('.mp-tab').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
   const h = (location.hash || '').slice(1);
