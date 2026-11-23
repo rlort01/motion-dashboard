@@ -320,6 +320,15 @@
     }, 1500);
   };
   document.querySelectorAll('.mp-tab').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
+  // Per-person tabs (public.tab_profile, set on the Access tab). The database only sends data for allowed tabs;
+  // this hides the buttons to match. Scorecard, Goals and Data sources are for everyone; Enter numbers is for Admins.
+  const GATED = ['workorders', 'billing', 'utilreview', 'portfolio', 'map', 'comms'];
+  window.mpApplyTabs = (tabs, isAdmin) => {
+    GATED.forEach((t) => { const b = document.querySelector('.mp-tab[data-tab="' + t + '"]'); if (b) b.hidden = !tabs.includes(t); });
+    const e = document.querySelector('.mp-tab[data-tab="entry"]'); if (e) e.hidden = !isAdmin;
+    const cur = (location.hash || '#scorecard').slice(1), btn = document.querySelector('.mp-tab[data-tab="' + cur + '"]');
+    if (btn && btn.hidden) showTab('scorecard');
+  };
   const h = (location.hash || '').slice(1);
   if (['scorecard', 'workorders', 'billing', 'comms', 'portfolio', 'map', 'goals', 'entry', 'exec', 'commercial', 'hoa', 'access'].includes(h)) showTab(h);
 

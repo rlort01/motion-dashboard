@@ -230,6 +230,11 @@
     if (window.mpEntry) window.mpEntry.load();
     if (window.mpGoalsPage) window.mpGoalsPage.render();
     if (window.mpExec) window.mpExec.load();
+    if (!window.mpTabsApplied) {
+      window.mpTabsApplied = true;
+      const mt = await sb.rpc('my_tabs');
+      if (window.mpApplyTabs) window.mpApplyTabs(mt.error ? ['workorders', 'portfolio', 'map'] : (mt.data || []), window.mpIsAdmin === true);
+    }
     if (window.mpAccess && !window.mpAccessLoaded) { window.mpAccessLoaded = true; window.mpAccess.load(); }
     if (window.mpCommercial && !window.mpCommercialLoaded) { window.mpCommercialLoaded = true; window.mpCommercial.load(); }
     if (!window.mpDiagSent) { window.mpDiagSent = true; setTimeout(sendDiag, 6000); }

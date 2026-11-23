@@ -5,7 +5,19 @@
   const $ = (id) => document.getElementById(id);
   const ALL = [['admin', 'Admin', 'Edit goals and enter numbers'], ['exec', 'Executive', 'Company cash, projection and P&L'], ['commercial', 'Commercial & HOA', 'Commercial tenants and HOA dues'], ['manager', 'Manage access', 'Add and remove people']];
   let AREAS = ALL, owner = false;
-  const label = (k) => (ALL.find((a) => a[0] === k) || [k, k])[1];
+  const TABS = [['workorders', 'Work orders'], ['billing', 'Billing check'], ['utilreview', 'Utilities'], ['portfolio', 'Portfolio'], ['map', 'Map'], ['comms', 'Communications']];
+  // Role presets: picking one checks its tabs; any box can still be changed afterwards (the role then shows Custom).
+  const ROLES = [
+    ['Leadership', ['workorders', 'billing', 'utilreview', 'portfolio', 'map', 'comms']],
+    ['Property manager', ['workorders', 'billing', 'portfolio', 'map', 'comms']],
+    ['Leasing', ['portfolio', 'map', 'comms']],
+    ['Maintenance', ['workorders', 'map']],
+    ['Accounting', ['billing', 'utilreview', 'portfolio']],
+    ['Onboarding', ['workorders', 'portfolio', 'map']],
+    ['Starter', ['workorders', 'portfolio', 'map']],
+  ];
+  const roleFor = (tabs) => { const k = tabs.slice().sort().join(); const r = ROLES.find(([, t]) => t.slice().sort().join() === k); return r ? r[0] : 'Custom'; };
+  const label = (k) => (k.startsWith('tab:') ? (TABS.find((t) => t[0] === k.slice(4)) || [k, k])[1] + ' tab' : (ALL.find((a) => a[0] === k) || [k, k])[1]);
   const when = (s) => (s ? d3.timeFormat('%b %-d, %Y %-I:%M %p')(new Date(s)) : 'Never');
   const td = (tr, text, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = text == null ? '' : text; tr.appendChild(c); return c; };
   let sb = null, me = '';
@@ -26,6 +38,25 @@
     list.forEach((p) => {
       const tr = document.createElement('tr');
       td(tr, p.email + (p.email === me ? ' (you)' : '')); td(tr, when(p.last_sign_in));
+      // Role and tabs
+      const lockTabs = !owner && p.owner;
+      let tabs = (p.tabs || []).slice();
+      const rc = td(tr, ''); const sel = document.createElement('select'); sel.className = 'dash-select'; sel.setAttribute('aria-label', 'Role for ' + p.email);
+      [...ROLES.map((r) => r[0]), 'Custom'].forEach((n) => sel.appendChild(Object.assign(document.createElement('option'), { value: n, textContent: n })));
+      sel.value = p.role && p.role === roleFor(tabs) ? p.role : roleFor(tabs); sel.disabled = lockTabs; rc.appendChild(sel);
+      const boxes = {};
+      const saveTabs = async (role) => {
+        const r = await sb.rpc('access_set_tabs', { p_email: p.email, p_role: role, p_tabs: tabs });
+        if (r.error) { msg(r.error.message, true); refresh(); return; }
+        msg('Saved tabs for ' + p.email + ' (' + role + ').'); history();
+      };
+      sel.onchange = () => { if (sel.value === 'Custom') return; tabs = ROLES.find((r) => r[0] === sel.value)[1].slice(); TABS.forEach(([k]) => { boxes[k].checked = tabs.includes(k); }); saveTabs(sel.value); };
+      TABS.forEach(([k, n]) => {
+        const c = td(tr, ''); c.style.textAlign = 'center';
+        const b = document.createElement('input'); b.type = 'checkbox'; b.checked = tabs.includes(k); b.disabled = lockTabs; b.setAttribute('aria-label', n + ' tab for ' + p.email);
+        b.onchange = () => { tabs = b.checked ? [...tabs, k] : tabs.filter((x) => x !== k); sel.value = roleFor(tabs); saveTabs(sel.value); };
+        boxes[k] = b; c.appendChild(b);
+      });
       AREAS.forEach(([k]) => {
         const c = td(tr, ''); c.style.textAlign = 'center';
         const b = document.createElement('input'); b.type = 'checkbox'; b.checked = !!p[k];
@@ -67,16 +98,16 @@
     const s = await sb.auth.getSession(); me = ((s.data.session || {}).user || {}).email || ''; me = me.toLowerCase();
     const tab = document.querySelector('[data-tab="access"]'); if (tab) tab.hidden = false;
     // Build the header and the add form from the areas this person may change.
-    $('acHead').replaceChildren(...['Person', 'Last signed in'].map((t) => Object.assign(document.createElement('th'), { textContent: t })), ...AREAS.map(([, n, d]) => { const th = document.createElement('th'); th.style.textAlign = 'center'; th.innerHTML = ''; th.append(n, document.createElement('br'), Object.assign(document.createElement('span'), { className: 'mp-meta', textContent: d })); return th; }));
-    $('acArea').replaceChildren(...AREAS.filter(([k]) => owner || k !== 'manager').map(([k, n, d]) => Object.assign(document.createElement('option'), { value: k, textContent: n + ': ' + d })));
+    $('acHead').replaceChildren(...['Person', 'Last signed in', 'Role'].map((t) => Object.assign(document.createElement('th'), { textContent: t })), ...TABS.map(([, n]) => { const th = document.createElement('th'); th.style.textAlign = 'center'; th.append(n, document.createElement('br'), Object.assign(document.createElement('span'), { className: 'mp-meta', textContent: 'tab' })); return th; }), ...AREAS.map(([, n, d]) => { const th = document.createElement('th'); th.style.textAlign = 'center'; th.innerHTML = ''; th.append(n, document.createElement('br'), Object.assign(document.createElement('span'), { className: 'mp-meta', textContent: d })); return th; }));
+    $('acArea').replaceChildren(...ROLES.map(([n, t]) => Object.assign(document.createElement('option'), { value: 'role:' + n, textContent: 'Role: ' + n + ' (' + t.map((k) => TABS.find((x) => x[0] === k)[1]).join(', ') + ')' })), ...AREAS.filter(([k]) => owner || k !== 'manager').map(([k, n, d]) => Object.assign(document.createElement('option'), { value: k, textContent: n + ': ' + d })));
     $('acWho').textContent = owner ? 'Only you and the people you mark "Manage access" can see this tab.' : 'Robert and the people he marks "Manage access" can see this tab. Only Robert can change Executive access or who manages access.';
     $('acAdd').onsubmit = async (e) => {
       e.preventDefault();
       const email = $('acEmail').value.trim().toLowerCase(), area = $('acArea').value;
       if (!email) return;
-      const r = await sb.rpc('access_set', { p_email: email, p_area: area, p_on: true });
+      const r = area.startsWith('role:') ? await sb.rpc('access_set_tabs', { p_email: email, p_role: area.slice(5), p_tabs: ROLES.find((x) => x[0] === area.slice(5))[1] }) : await sb.rpc('access_set', { p_email: email, p_area: area, p_on: true });
       if (r.error) { msg(r.error.message, true); return; }
-      msg('Gave ' + label(area) + ' access to ' + email + '. They\'ll see it the next time they open the dashboard.');
+      msg((area.startsWith('role:') ? 'Set ' + email + ' up as ' + area.slice(5) + '.' : 'Gave ' + label(area) + ' access to ' + email + '.') + ' They\'ll see it the next time they open the dashboard.');
       $('acEmail').value = '';
       refresh();
     };
