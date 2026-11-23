@@ -7,7 +7,7 @@
 <title>Motion Dashboard</title>
 <link rel="icon" href="rings.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Source+Sans+3:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=202611232143">
+<link rel="stylesheet" href="styles.css?v=202611232147">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -565,15 +565,15 @@
 
   <section id="access" data-section hidden>
     <h2 class="mp-h2">Who can see what</h2>
-    <p class="mp-note">Anyone with a Motion email (@motionpmg.com, @motionpropertypreservation.com or @motionrealty.com) can sign in and see the general tabs. Check a box to give someone more; uncheck it to take it away. Changes take effect the next time they open the dashboard. Only you can see this tab, and every change is recorded below.</p>
+    <p class="mp-note">Anyone with a Motion email (@motionpmg.com, @motionpropertypreservation.com or @motionrealty.com) can sign in and see the general tabs. Check a box to give someone more; uncheck it to take it away. Changes take effect the next time they open the dashboard, and every change is recorded below. <span id="acWho"></span></p>
     <form id="acAdd" class="mp-bar" style="margin-top: var(--cds-gap-sm)">
       <label>Email<input id="acEmail" class="dash-select" type="email" placeholder="name@motionpmg.com" required style="min-width:260px"></label>
-      <label>Access<select id="acArea" class="dash-select"><option value="admin">Admin: edit goals and enter numbers</option><option value="exec">Executive: company cash and P&amp;L</option><option value="commercial">Commercial &amp; HOA</option></select></label>
+      <label>Access<select id="acArea" class="dash-select"></select></label>
       <button class="mp-chip" type="submit" style="height:32px">Give access</button>
     </form>
     <p class="mp-note" id="acMsg" role="status"></p>
     <div class="mp-wrap mp-scroll"><table class="mp-table">
-      <thead><tr><th>Person</th><th>Last signed in</th><th style="text-align:center">Admin<br><span class="mp-meta">Goals &amp; entries</span></th><th style="text-align:center">Executive<br><span class="mp-meta">Cash &amp; P&amp;L</span></th><th style="text-align:center">Commercial &amp; HOA</th></tr></thead>
+      <thead><tr id="acHead"></tr></thead>
       <tbody id="acRows"></tbody></table></div>
     <h3 class="mp-h3">Change history</h3>
     <div class="mp-wrap mp-scroll"><table class="mp-table">
@@ -883,22 +883,22 @@
 </div>
 
 </div>
-<script src="dash.js?v=202611232143"></script>
-<script src="sc.js?v=202611232143"></script>
-<script src="app.js?v=202611232143"></script>
-<script src="ramp.js?v=202611232143"></script>
-<script src="companies.js?v=202611232143"></script>
-<script src="owners.js?v=202611232143"></script>
-<script src="reviews.js?v=202611232143"></script>
-<script src="portfolio.js?v=202611232143"></script>
-<script src="access.js?v=202611232143"></script>
-<script src="commercial.js?v=202611232143"></script>
-<script src="exec.js?v=202611232143"></script>
-<script src="goals.js?v=202611232143"></script>
-<script src="weather.js?v=202611232143"></script>
-  <script src="map.js?v=202611232143"></script>
-<script src="comms.js?v=202611232143"></script>
-<script src="entry.js?v=202611232143"></script>
-<script src="main.js?v=202611232143"></script>
+<script src="dash.js?v=202611232147"></script>
+<script src="sc.js?v=202611232147"></script>
+<script src="app.js?v=202611232147"></script>
+<script src="ramp.js?v=202611232147"></script>
+<script src="companies.js?v=202611232147"></script>
+<script src="owners.js?v=202611232147"></script>
+<script src="reviews.js?v=202611232147"></script>
+<script src="portfolio.js?v=202611232147"></script>
+<script src="access.js?v=202611232147"></script>
+<script src="commercial.js?v=202611232147"></script>
+<script src="exec.js?v=202611232147"></script>
+<script src="goals.js?v=202611232147"></script>
+<script src="weather.js?v=202611232147"></script>
+  <script src="map.js?v=202611232147"></script>
+<script src="comms.js?v=202611232147"></script>
+<script src="entry.js?v=202611232147"></script>
+<script src="main.js?v=202611232147"></script>
 </body>
 </html>

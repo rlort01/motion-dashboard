@@ -3,7 +3,9 @@
 // record who changed what in public.access_log; the database lists themselves stay locked to everyone else.
 (function () {
   const $ = (id) => document.getElementById(id);
-  const AREAS = [['admin', 'Admin', 'Edit goals and enter numbers'], ['exec', 'Executive', 'Company cash, projection and P&L'], ['commercial', 'Commercial & HOA', 'Commercial tenants and HOA dues']];
+  const ALL = [['admin', 'Admin', 'Edit goals and enter numbers'], ['exec', 'Executive', 'Company cash, projection and P&L'], ['commercial', 'Commercial & HOA', 'Commercial tenants and HOA dues'], ['manager', 'Manage access', 'Add and remove people']];
+  let AREAS = ALL, owner = false;
+  const label = (k) => (ALL.find((a) => a[0] === k) || [k, k])[1];
   const when = (s) => (s ? d3.timeFormat('%b %-d, %Y %-I:%M %p')(new Date(s)) : 'Never');
   const td = (tr, text, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; c.textContent = text == null ? '' : text; tr.appendChild(c); return c; };
   let sb = null, me = '';
@@ -15,7 +17,7 @@
     const r = await sb.rpc('access_set', { p_email: email, p_area: area, p_on: on });
     box.disabled = false;
     if (r.error) { box.checked = !on; msg(r.error.message, true); return; }
-    msg((on ? 'Gave ' : 'Removed ') + AREAS.find((a) => a[0] === area)[1] + (on ? ' access to ' : ' access from ') + email + '.');
+    msg((on ? 'Gave ' : 'Removed ') + label(area) + (on ? ' access to ' : ' access from ') + email + '.');
     history();
   };
 
@@ -29,6 +31,7 @@
         const b = document.createElement('input'); b.type = 'checkbox'; b.checked = !!p[k];
         b.setAttribute('aria-label', k + ' for ' + p.email);
         if (p.email === me) { b.disabled = true; b.title = 'You can\'t remove your own access'; }
+        else if (!owner && (p.owner || k === 'manager')) { b.disabled = true; b.title = 'Only Robert can change this'; }
         b.onchange = () => set(p.email, k, b.checked, b);
         c.appendChild(b);
       });
@@ -42,7 +45,7 @@
     if (r.error) return;
     (r.data || []).forEach((x) => {
       const tr = document.createElement('tr');
-      td(tr, when(x.at)); td(tr, x.by_email); td(tr, (x.granted ? 'Gave ' : 'Removed ') + AREAS.find((a) => a[0] === x.area)[1]); td(tr, x.email);
+      td(tr, when(x.at)); td(tr, x.by_email); td(tr, (x.granted ? 'Gave ' : 'Removed ') + label(x.area)); td(tr, x.email);
       tb.appendChild(tr);
     });
     if (!(r.data || []).length) { const tr = document.createElement('tr'); const c = td(tr, 'No changes yet.'); c.colSpan = 4; tb.appendChild(tr); }
@@ -57,17 +60,23 @@
 
   const load = async () => {
     sb = window.mpSupabase; if (!sb) return;
-    const ok = await sb.rpc('is_owner');
+    const ok = await sb.rpc('can_manage_access');
+    const ow = await sb.rpc('is_owner'); owner = !ow.error && ow.data === true;
+    AREAS = owner ? ALL : ALL.filter((a) => a[0] !== 'exec');
     if (ok.error || ok.data !== true) return; // not the owner: the tab stays hidden
     const s = await sb.auth.getSession(); me = ((s.data.session || {}).user || {}).email || ''; me = me.toLowerCase();
     const tab = document.querySelector('[data-tab="access"]'); if (tab) tab.hidden = false;
+    // Build the header and the add form from the areas this person may change.
+    $('acHead').replaceChildren(...['Person', 'Last signed in'].map((t) => Object.assign(document.createElement('th'), { textContent: t })), ...AREAS.map(([, n, d]) => { const th = document.createElement('th'); th.style.textAlign = 'center'; th.innerHTML = ''; th.append(n, document.createElement('br'), Object.assign(document.createElement('span'), { className: 'mp-meta', textContent: d })); return th; }));
+    $('acArea').replaceChildren(...AREAS.filter(([k]) => owner || k !== 'manager').map(([k, n, d]) => Object.assign(document.createElement('option'), { value: k, textContent: n + ': ' + d })));
+    $('acWho').textContent = owner ? 'Only you and the people you mark "Manage access" can see this tab.' : 'Robert and the people he marks "Manage access" can see this tab. Only Robert can change Executive access or who manages access.';
     $('acAdd').onsubmit = async (e) => {
       e.preventDefault();
       const email = $('acEmail').value.trim().toLowerCase(), area = $('acArea').value;
       if (!email) return;
       const r = await sb.rpc('access_set', { p_email: email, p_area: area, p_on: true });
       if (r.error) { msg(r.error.message, true); return; }
-      msg('Gave ' + AREAS.find((a) => a[0] === area)[1] + ' access to ' + email + '. They\'ll see it the next time they open the dashboard.');
+      msg('Gave ' + label(area) + ' access to ' + email + '. They\'ll see it the next time they open the dashboard.');
       $('acEmail').value = '';
       refresh();
     };
