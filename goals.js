@@ -2,7 +2,7 @@
 // Saved to Supabase (scorecard_goals); a database trigger stamps who/when and logs every change.
 (function () {
   const $ = (id) => document.getElementById(id);
-  const DIRS = [['H', 'Higher is better'], ['L', 'Lower is better'], ['N', 'No goal (track only)']];
+  const DIRS = [['H', 'Higher is better'], ['L', 'Lower is better'], ['B', 'Target range (±5 pts)'], ['N', 'No goal (track only)']];
   const UNIT = { Percentage: '%', 'Dollar Amount': '$', Hours: 'hours', Days: 'days', Time: 'days', Count: 'count', Ratio: 'ratio', Rank: 'rank' };
   const toShown = (u, v) => (v === null || v === undefined || v === '' ? '' : u === 'Percentage' ? String(Math.round(+v * 100000) / 1000) : String(+v));
   const toStored = (u, t) => { t = String(t).trim().replace(/[$,%\s]/g, ''); if (t === '') return null; const v = Number(t); if (!isFinite(v)) return undefined; return u === 'Percentage' ? Math.round(v * 100000) / 10000000 : v; };

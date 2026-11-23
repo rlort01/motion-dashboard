@@ -47,6 +47,7 @@
         if (yr !== '2026') return;
         if (leads) put('r24', t.MARKET, mo, done / leads, 'Tenant Turner showings that happened / new leads', 'Tenant Turner');
         const a = apps.get(t.MARKET + '|' + t.MONTH);
+        if (t.RESP_MED_H !== null && t.RESP_MED_H !== undefined && +t.RESP_N) put('r15', t.MARKET, mo, +t.RESP_MED_H, 'Tenant Turner: typical hours from a lead arriving to a showing booked, ' + t.RESP_N + ' lead(s)', 'Tenant Turner');
         if (done && a !== undefined) put('r25', t.MARKET, mo, a / done, 'AppFolio applications / Tenant Turner showings that happened', 'AppFolio + Tenant Turner');
       });
       sys.rows = rows;
@@ -172,6 +173,18 @@
           if (units) put('r30u', 'Combined', mo, rev / units, 'Revenue across all markets divided by ' + units + ' units', 'AppFolio');
         }
       }
+      // Owner churn: doors that left that month / doors at the end of the month before (the year to date adds up to the annual rate).
+      for (let mo = 1; mo <= curMo; mo++) {
+        let out = 0, base = 0;
+        ['Georgia', 'Tennessee', 'North Carolina'].forEach((mk) => {
+          const o = mo === 1 ? null : (() => { const i = at.get('eom_doors|' + mk + '|' + (mo - 1)); return i === undefined ? null : +rows[i].VALUE; })();
+          const lost = (() => { const i = at.get('doors_out|' + mk + '|' + mo); return i === undefined ? null : +rows[i].VALUE; })();
+          if (!o || lost === null) return;
+          put('churn', mk, mo, lost / o, lost + ' door(s) left out of ' + o + ' at the start of the month', 'AppFolio');
+          out += lost; base += o;
+        });
+        if (base) put('churn', 'Combined', mo, out / base, out + ' door(s) left out of ' + base + ' at the start of the month', 'AppFolio');
+      }
       // r36, r40-r44 from Jobber (built by jobber_metrics.py in the Jobber refresh).
       const jm = ds('jobber_metrics');
       if (jm) jm.forEach((r) => { if (+r.MONTH <= curMo) put(r.ID, r.MARKET, +r.MONTH, +r.VALUE, r.NOTE, 'Jobber'); });
@@ -181,13 +194,20 @@
     data.forEach((d) => {
       if (d.id === 'sc2026') {
         // Retired metrics: search ranking and NPS (not tracked)
-        const DROP = new Set(['r56', 'r58']);
+        const DROP = new Set(['r56', 'r58', 'r46']); // r46 Sales goal: same as Doors Closed
         d.rows = d.rows.filter((r) => !DROP.has(r.ID));
         // Revenue per unit, shown under revenue per door (track only, no goal).
         if (!d.rows.some((r) => r.ID === 'r30u')) {
           const out = []; let last = -1;
           d.rows.forEach((r, i) => { out.push(r); if (r.ID === 'r30') last = out.length; });
           if (last > 0) out.splice(last, 0, ...d.rows.filter((r) => r.ID === 'r30').map((r) => Object.assign({}, r, { ID: 'r30u', METRIC: 'Revenue Per Unit Per Month', VALUE: '', GOAL: '', GOAL_TEXT: '', DIR: 'N' })));
+          d.rows = out;
+        }
+        // Owner churn, under the door counts.
+        if (!d.rows.some((r) => r.ID === 'churn')) {
+          const out = []; let last = -1;
+          d.rows.forEach((r) => { out.push(r); if (r.ID === 'doors_out') last = out.length; });
+          if (last > 0) out.splice(last, 0, ...d.rows.filter((r) => r.ID === 'doors_out').map((r) => Object.assign({}, r, { ID: 'churn', METRIC: 'Owner Churn (doors lost)', VALUE: '', GOAL: '', GOAL_TEXT: '', DIR: 'L', UNIT: 'Percentage', AGG: 'sum' })));
           d.rows = out;
         }
         const g26 = new Map(window.mpGoals.filter((g) => g.year === 2026).map((g) => [g.metric_id, g]));

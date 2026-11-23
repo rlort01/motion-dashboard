@@ -20,13 +20,19 @@
       default: return d3.format(',.4~f')(v);
     }
   };
+  // Target range (dir B): within 5 points of a percentage goal, or 10% of any other goal.
+  const band = (g, unit) => (unit === 'Percentage' ? 0.05 : Math.abs(g) * 0.1);
   const fmtGoal = (r) => {
     if (r.goal === null) return r.goalText || '';
     const pre = r.dir === 'L' ? '≤ ' : r.dir === 'H' ? '≥ ' : '';
     if (r.unit === 'Rank') return 'Top ' + r.goal;
+    if (r.dir === 'B') { const w = band(r.goal, r.unit); return fmtVal(r.goal - w, r.unit) + ' to ' + fmtVal(r.goal + w, r.unit); }
     return pre + fmtVal(r.goal, r.unit);
   };
 
+  // Metrics the systems fill in completely (no typed-in numbers are used for them).
+  const FULL_AUTO = new Set(['r15', 'r19', 'r20', 'r26', 'r34', 'r37', 'r40', 'r42', 'r43', 'r44', 'churn']);
+  window.mpFullAuto = FULL_AUTO;
   dash.calc('scMerged', {
     title: '2026 scorecard, AppFolio first',
     description: 'Each market and month of the 2026 scorecard. Where AppFolio gives the metric, the AppFolio figure is used; otherwise the figure entered on the scorecard workbook.',
@@ -37,6 +43,8 @@
       return sc.map((r) => {
         const k = r.ID + '|' + r.MARKET + '|' + (+r.MONTH);
         const a = auto.get(k);
+        // Fully automatic metrics: a month with nothing to measure shows "None", never a typed-in number.
+        if (!a && FULL_AUTO.has(r.ID)) return { ID: r.ID, MARKET: r.MARKET, MONTH: +r.MONTH, AGG: r.AGG, VALUE: null, SRC: 'None' };
         return { ID: r.ID, MARKET: r.MARKET, MONTH: +r.MONTH, AGG: r.AGG, VALUE: a ? num(a.VALUE) : num(r.VALUE), SRC: a ? (a.SOURCE || 'AppFolio') : num(r.VALUE) !== null ? 'Entered' : '' };
       });
     }
@@ -63,6 +71,7 @@
           }
         }
         const srcs = Array.from(new Set(vals.map((r) => r.SRC)));
+        if (!vals.length && rs.some((r) => r.SRC === 'None')) srcs.push('None');
         const cw = companyWide.get(id + '|' + month);
         if (cw) { out.push({ key: id + '|' + month, ID: id, MONTH: month, VALUE: Math.round(+cw.VALUE * 10000) / 10000, SRC: cw.SOURCE || 'AppFolio' }); return; }
         out.push({ key: id + '|' + month, ID: id, MONTH: month, VALUE: v === null ? null : Math.round(v * 10000) / 10000, SRC: srcs.length === 1 ? srcs[0] : srcs.length ? 'Mixed' : '' });
@@ -88,7 +97,7 @@
         const prior = m > 1 && byKey.has(id + '|' + (m - 1)) ? byKey.get(id + '|' + (m - 1)) : null;
         const ytdVals = d3.range(1, m + 1).map((i) => byKey.get(id + '|' + i)).filter((x) => x !== null && x !== undefined);
         const ytd = id === 'eom_doors' || id === 'eom_units' ? v : ytdVals.length ? (r.AGG === 'sum' ? d3.sum(ytdVals) : d3.mean(ytdVals)) : null;
-        const meets = (x) => (r.DIR === 'H' ? x >= goal : x <= goal);
+        const meets = (x) => (r.DIR === 'B' ? Math.abs(x - goal) <= band(goal, r.UNIT) + 1e-9 : r.DIR === 'H' ? x >= goal : x <= goal);
         let status = '';
         if (!isFull) {
           if (v !== null && goal !== null && r.DIR !== 'N') status = meets(v) ? 'On target' : 'Off target';
@@ -102,7 +111,7 @@
         const cmp = yv === null ? null : (r.AGG === 'sum' && id !== 'eom_doors' && id !== 'eom_units' ? yv / ytdVals.length : yv);
         if (cmp !== null && goal !== null && r.DIR !== 'N') status = meets(cmp) ? 'On target' : 'Off target';
         const scored = goal !== null && r.DIR !== 'N' ? ytdVals : [];
-        const srcs = Array.from(new Set(d3.range(1, m + 1).map((i) => src.get(id + '|' + i)).filter(Boolean)));
+        const srcs = Array.from(new Set(d3.range(1, m + 1).map((i) => src.get(id + '|' + i)).filter((x) => x && x !== 'None')));
         out.push({ ID: id, SECTION: r.SECTION, METRIC: r.METRIC, goal, goalText: r.GOAL_TEXT, unit: r.UNIT, owner: r.OWNER, dir: r.DIR, agg: r.AGG,
           value: yv, prior: null, ytd: v, monthsOn: scored.filter(meets).length, monthsScored: scored.length,
           source: srcs.length === 1 ? srcs[0] : srcs.length ? 'Mixed' : '', status });
@@ -222,7 +231,7 @@
     if (r.value !== null && r.prior !== null) {
       const d = r.value - r.prior;
       const c = document.createElement('div');
-      const better = r.dir === 'H' ? d > 0 : r.dir === 'L' ? d < 0 : null;
+      const better = r.dir === 'H' ? d > 0 : r.dir === 'L' ? d < 0 : r.dir === 'B' && r.goal !== null && r.prior !== null ? Math.abs(r.value - r.goal) < Math.abs(r.prior - r.goal) : null;
       c.textContent = (d > 0 ? '▲ ' : d < 0 ? '▼ ' : '') + (r.unit === 'Percentage' ? d3.format('.1f')(Math.abs(d) * 100) + ' pts' : fmtVal(Math.abs(d), r.unit)) + ' vs ' + MONTHS[mon() - 2];
       if (d !== 0 && better !== null) c.style.color = better ? 'var(--color-ok)' : 'var(--color-bad)';
       el.appendChild(c);
@@ -252,10 +261,10 @@
       tr.onclick = () => { dash.setParams({ metric: r.ID }); const c = document.getElementById('sc-chart-card'); if (c && c.scrollIntoView) c.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); };
       tr.onkeydown = (e) => { if (e.key === 'Enter') tr.onclick(); };
       td(tr, r.METRIC); td(tr, r.goal !== null ? fmtGoal(r) : r.goalText); td(tr, r.owner);
-      td(tr, fmtVal(r.value, r.unit), 'mp-num'); td(tr, full() ? (r.monthsScored ? r.monthsOn + ' of ' + r.monthsScored : '—') : fmtVal(r.prior, r.unit), 'mp-num'); td(tr, fmtVal(r.ytd, r.unit), 'mp-num');
+      td(tr, r.value === null && r.source === 'None' ? 'None this month' : fmtVal(r.value, r.unit), 'mp-num'); td(tr, full() ? (r.monthsScored ? r.monthsOn + ' of ' + r.monthsScored : '—') : fmtVal(r.prior, r.unit), 'mp-num'); td(tr, fmtVal(r.ytd, r.unit), 'mp-num');
       const s = td(tr, ''); if (r.status) { const p = document.createElement('span'); p.className = 'mp-pill ' + (r.status === 'On target' ? 'mp-ok' : 'mp-bad mp-flash'); p.textContent = r.status; s.appendChild(p); }
-      const auto = r.source && r.source !== 'Entered' && r.source !== 'Mixed';
-      const so = td(tr, auto ? r.source + ' (auto)' : r.source === 'Mixed' ? 'Auto + entered' : r.source === 'Entered' ? 'Entered' : ''); if (auto) so.style.color = 'var(--color-ok)';
+      const auto = r.source && r.source !== 'Entered' && r.source !== 'Mixed' && r.source !== 'None';
+      const so = td(tr, r.source === 'None' ? 'Automatic' : auto ? r.source + ' (auto)' : r.source === 'Mixed' ? 'Auto + entered' : r.source === 'Entered' ? 'Entered' : ''); if (auto) so.style.color = 'var(--color-ok)';
       tb.appendChild(tr);
     });
   });
