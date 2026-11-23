@@ -3,10 +3,12 @@
 // Refreshes every 10 minutes while the page is open. Public data, no keys; nothing about our properties is sent out.
 (function () {
   const ALERTS = 'https://api.weather.gov/alerts/active?area=GA,TN,NC&status=actual&message_type=alert,update';
-  const RADAR = 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png';
+  // Live radar loop: the last 50 minutes in 5-minute frames (Iowa Environmental Mesonet NEXRAD mosaic), newest last.
+  const RFRAMES = ['m50m', 'm45m', 'm40m', 'm35m', 'm30m', 'm25m', 'm20m', 'm15m', 'm10m', 'm05m', ''];
+  const RURL = (f) => 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913' + (f ? '-' + f : '') + '/{z}/{x}/{y}.png';
   const zoneCache = new Map();
   const state = { alerts: [], at: null, err: null, showAlerts: true, showRadar: false };
-  let map = null, alertLayer = null, radarLayer = null;
+  let map = null, alertLayer = null, radarGroup = null, radarFrames = [], radarTimer = null, radarIdx = 0, radarStamp = 0;
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const kind = (ev) => /warning/i.test(ev) ? 'warning' : /watch/i.test(ev) ? 'watch' : /advisory/i.test(ev) ? 'advisory' : 'statement';
   const COLOR = { warning: '#e03131', watch: '#f76707', advisory: '#f5c400', statement: '#4dabf7' };
@@ -53,6 +55,30 @@
     return out;
   };
 
+  // Show the radar as a loop: step through the frames, pause on the newest one.
+  const radar = (fresh) => {
+    if (!map || !radarGroup) return;
+    const lbl = document.getElementById('wxRadarTime');
+    if (!state.showRadar) {
+      if (map.hasLayer(radarGroup)) map.removeLayer(radarGroup);
+      clearTimeout(radarTimer); radarTimer = null; if (lbl) lbl.textContent = '';
+      return;
+    }
+    const stamp = Math.floor(Date.now() / 300000);
+    if (fresh || stamp !== radarStamp) { radarStamp = stamp; radarFrames.forEach((l, i) => l.setUrl(RURL(RFRAMES[i]) + '?t=' + stamp)); }
+    if (!map.hasLayer(radarGroup)) { radarFrames.forEach((l) => radarGroup.addLayer(l)); radarGroup.addTo(map); }
+    if (radarTimer) return;
+    const step = () => {
+      radarFrames.forEach((l, i) => l.setOpacity(i === radarIdx ? 0.6 : 0));
+      const mins = (RFRAMES.length - 1 - radarIdx) * 5, t = new Date(Math.floor(Date.now() / 300000) * 300000 - mins * 60000);
+      if (lbl) lbl.textContent = 'Radar ' + t.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + (mins ? '' : ' (latest)');
+      const last = radarIdx === RFRAMES.length - 1;
+      radarIdx = last ? 0 : radarIdx + 1;
+      radarTimer = setTimeout(step, last ? 2000 : 450);
+    };
+    step();
+  };
+
   const draw = () => {
     if (!map) return;
     alertLayer.clearLayers();
@@ -62,9 +88,7 @@
         .bindPopup('<strong>' + esc(a.event) + '</strong><br>' + esc(a.headline || '') + (a.ends ? '<br>Until ' + esc(fmt(a.ends)) : '') + '<br><small>' + esc((a.area || '').slice(0, 300)) + '</small>')
         .addTo(alertLayer);
     });
-    if (state.showRadar && !map.hasLayer(radarLayer)) radarLayer.addTo(map);
-    if (!state.showRadar && map.hasLayer(radarLayer)) map.removeLayer(radarLayer);
-    if (radarLayer && state.showRadar) radarLayer.setUrl(RADAR + '?t=' + Math.floor(Date.now() / 300000));
+    radar();
     dash.draw('wxSummary'); dash.draw('wxTable');
   };
 
@@ -72,7 +96,9 @@
     map = window.mpMap;
     map.createPane('wx'); map.getPane('wx').style.zIndex = 390; // under the property pins
     alertLayer = L.layerGroup().addTo(map);
-    radarLayer = L.tileLayer(RADAR, { opacity: 0.55, pane: 'wx', attribution: 'Radar: Iowa Environmental Mesonet / NWS' });
+    radarGroup = L.layerGroup();
+    radarFrames = RFRAMES.map((f) => L.tileLayer(RURL(f), { opacity: 0, pane: 'wx', attribution: 'Radar: Iowa Environmental Mesonet / NWS' }));
+    setInterval(() => { if (state.showRadar) radar(true); }, 5 * 60 * 1000); // new frames every 5 minutes
     refresh(); setInterval(refresh, 10 * 60 * 1000);
   });
 
