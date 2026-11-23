@@ -230,6 +230,7 @@
     if (window.mpEntry) window.mpEntry.load();
     if (window.mpGoalsPage) window.mpGoalsPage.render();
     if (window.mpExec) window.mpExec.load();
+    if (window.mpAccess && !window.mpAccessLoaded) { window.mpAccessLoaded = true; window.mpAccess.load(); }
     if (window.mpCommercial && !window.mpCommercialLoaded) { window.mpCommercialLoaded = true; window.mpCommercial.load(); }
     if (!window.mpDiagSent) { window.mpDiagSent = true; setTimeout(sendDiag, 6000); }
     updated = new Date(d3.max(data, (d) => new Date(d.updated_at)));

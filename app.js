@@ -303,12 +303,12 @@
     document.querySelectorAll('.mp-tab').forEach((b) => b.setAttribute('aria-selected', b.dataset.tab === id ? 'true' : 'false'));
     dash.setLink(id);
     // Only show the filters the tab actually uses.
-    const useMkt = id !== 'hoa' && ['scorecard', 'workorders', 'billing', 'portfolio', 'map'].includes(id);
+    const useMkt = id !== 'hoa' && id !== 'access' && ['scorecard', 'workorders', 'billing', 'portfolio', 'map'].includes(id);
     const fm = document.getElementById('fltMarket'), fo = document.getElementById('fltMonth'), fn = document.getElementById('fltNone');
     if (fm) fm.hidden = !useMkt;
     if (fo) fo.hidden = id !== 'scorecard';
     if (fn) fn.hidden = useMkt || ['entry', 'sources'].includes(id);
-    if (fn && (id === 'commercial' || id === 'exec' || id === 'hoa')) fn.hidden = true;
+    if (fn && (id === 'commercial' || id === 'exec' || id === 'hoa' || id === 'access')) fn.hidden = true;
     if (document.getElementById('filters')) document.getElementById('filters').hidden = id === 'entry' || id === 'sources';
     window.dispatchEvent(new CustomEvent('mp-tab', { detail: id }));
     // Redraw when a tab is shown, so its tables are always built from the current data.
@@ -321,7 +321,7 @@
   };
   document.querySelectorAll('.mp-tab').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
   const h = (location.hash || '').slice(1);
-  if (['scorecard', 'workorders', 'billing', 'comms', 'portfolio', 'map', 'goals', 'entry', 'exec', 'commercial', 'hoa'].includes(h)) showTab(h);
+  if (['scorecard', 'workorders', 'billing', 'comms', 'portfolio', 'map', 'goals', 'entry', 'exec', 'commercial', 'hoa', 'access'].includes(h)) showTab(h);
 
   window.mpView = { wo: 'all', inv: 'attention', gap: 'V', wocat: 'work' };
   const chipGroup = (attr, key, draw) => {
