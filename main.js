@@ -235,7 +235,7 @@
         errors: (window.mpErrors || []).slice(0, 15),
         tab: location.hash || '#scorecard',
         // Blank or placeholder drawings per tab, to find what didn't show after a refresh.
-        blanks: Object.fromEntries(q('[data-section]').map((s, i) => [s.id || 'section' + i, Array.from(s.querySelectorAll('[data-draw]')).filter((e) => /^(|—|no data)$/.test(e.textContent.trim())).map((e) => e.getAttribute('data-draw')).slice(0, 25)])),
+        blanks: Object.fromEntries(q('section[data-section]').map((s, i) => [s.id || 'section' + i, Array.from(s.querySelectorAll('[data-draw]')).filter((e) => /^(|—|no data)$/.test(e.textContent.trim())).map((e) => e.getAttribute('data-draw')).slice(0, 25)])),
         loadMs: window.mpLoadMs || null,
         loaded: loadedOnce
       };

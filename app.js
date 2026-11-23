@@ -299,7 +299,7 @@
 
   // ---------- tabs and chip views (listen + attributes only) ----------
   const showTab = (id) => {
-    document.querySelectorAll('[data-section]').forEach((s) => { s.hidden = s.id !== id; });
+    document.querySelectorAll('section[data-section]').forEach((s) => { s.hidden = s.id !== id; });
     document.querySelectorAll('.mp-tab').forEach((b) => b.setAttribute('aria-selected', b.dataset.tab === id ? 'true' : 'false'));
     dash.setLink(id);
     // Only show the filters the tab actually uses.
@@ -315,7 +315,7 @@
     // If the scorecard still shows empty tables a moment later, send one report so the cause can be found.
     if (id === 'scorecard') setTimeout(() => {
       const bodies = Array.from(document.querySelectorAll('#scorecard tbody[data-draw=scSection]'));
-      if (bodies.length && bodies.every((t) => !t.children.length) && !window.mpBlankSent && window.mpSendDiag) { window.mpBlankSent = true; window.mpSendDiag('blank-after-tab'); }
+      if (bodies.length && (bodies.every((t) => !t.children.length) || bodies.some((t) => t.hidden)) && dash._ids().length && !window.mpBlankSent && window.mpSendDiag) { window.mpBlankSent = true; window.mpSendDiag('blank-after-tab'); }
     }, 1500);
   };
   document.querySelectorAll('.mp-tab').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
