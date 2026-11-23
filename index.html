@@ -7,7 +7,7 @@
 <title>Motion Dashboard</title>
 <link rel="icon" href="rings.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Source+Sans+3:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=202611232114">
+<link rel="stylesheet" href="styles.css?v=202611232124">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -71,6 +71,7 @@
     <button class="mp-tab" role="tab" data-tab="goals" aria-selected="false">Goals</button>
     <button class="mp-tab" role="tab" data-tab="exec" aria-selected="false" hidden>Executive</button>
     <button class="mp-tab" role="tab" data-tab="commercial" aria-selected="false" hidden>Commercial</button>
+    <button class="mp-tab" role="tab" data-tab="hoa" aria-selected="false" hidden>HOA</button>
     <button class="mp-tab" role="tab" data-tab="sources" aria-selected="false">Data sources &amp; checks</button>
   </div>
 
@@ -557,6 +558,35 @@
     </div>
   </section>
 
+  <section id="hoa" data-section hidden>
+    <h2 class="mp-h2">HOAs</h2>
+    <p class="mp-note">Homeowner dues in AppFolio: who is paid up, who owes and how long, open items, and each association's cash and reserves. Only Robert and Chylie can see this tab. <span id="hoNote"></span></p>
+    <div class="mp-grid" style="margin: var(--cds-gap-sm) 0 var(--cds-gap-md)">
+      <div class="mp-card"><h3>Paid up</h3><div class="mp-big" id="hoPaid">—</div><div class="mp-meta" id="hoPaidN"></div></div>
+      <div class="mp-card"><h3>Owed by homeowners</h3><div class="mp-big" id="hoOwed">—</div><div class="mp-meta" id="hoOwedN"></div></div>
+      <div class="mp-card"><h3>Open items</h3><div class="mp-big" id="hoOpen">—</div><div class="mp-meta" id="hoOpenN"></div></div>
+      <div class="mp-card"><h3>Association cash</h3><div class="mp-big" id="hoCash">—</div><div class="mp-meta" id="hoCashN"></div></div>
+    </div>
+    <h3 class="mp-h3">Associations</h3>
+    <p class="mp-note">Red rows have less than $1,000 in reserves.</p>
+    <div class="mp-wrap mp-scroll"><table class="mp-table">
+      <thead><tr><th>Association</th><th class="mp-num">Homes</th><th>Dues</th><th class="mp-num">Paid up</th><th class="mp-num">Owed</th><th class="mp-num">Operating cash</th><th class="mp-num">Reserves</th><th class="mp-num">Net this year</th></tr></thead>
+      <tbody id="hoAssoc"></tbody></table></div>
+    <h3 class="mp-h3">Homeowners who owe</h3>
+    <p class="mp-note">Oldest balances first.</p>
+    <div class="mp-wrap mp-scroll"><table class="mp-table">
+      <thead><tr><th>Homeowner</th><th>Address</th><th>Association</th><th class="mp-num">Owed</th><th class="mp-num">0-60 days</th><th class="mp-num">61-90 days</th><th class="mp-num">90+ days</th><th>Last payment</th></tr></thead>
+      <tbody id="hoOwes"></tbody></table></div>
+    <h3 class="mp-h3">Open items</h3>
+    <div class="mp-wrap mp-scroll"><table class="mp-table">
+      <thead><tr><th>Item</th><th>Association</th><th>Home</th><th>Description</th><th>Status</th><th>Created</th></tr></thead>
+      <tbody id="hoWos"></tbody></table></div>
+    <h3 class="mp-h3">Paid up</h3>
+    <div class="mp-wrap mp-scroll"><table class="mp-table">
+      <thead><tr><th>Homeowner</th><th>Address</th><th>Association</th><th>Status</th></tr></thead>
+      <tbody id="hoPaidList"></tbody></table></div>
+  </section>
+
   <section id="commercial" data-section hidden>
     <h2 class="mp-h2">Commercial properties</h2>
     <p class="mp-note">Commercial tenants in AppFolio: who paid this month, balances, lease end dates, open work orders, vacant suites and the owner's funds. Only Robert and Chylie can see this tab. <span id="coNote"></span></p>
@@ -830,21 +860,21 @@
 </div>
 
 </div>
-<script src="dash.js?v=202611232114"></script>
-<script src="sc.js?v=202611232114"></script>
-<script src="app.js?v=202611232114"></script>
-<script src="ramp.js?v=202611232114"></script>
-<script src="companies.js?v=202611232114"></script>
-<script src="owners.js?v=202611232114"></script>
-<script src="reviews.js?v=202611232114"></script>
-<script src="portfolio.js?v=202611232114"></script>
-<script src="commercial.js?v=202611232114"></script>
-<script src="exec.js?v=202611232114"></script>
-<script src="goals.js?v=202611232114"></script>
-<script src="weather.js?v=202611232114"></script>
-  <script src="map.js?v=202611232114"></script>
-<script src="comms.js?v=202611232114"></script>
-<script src="entry.js?v=202611232114"></script>
-<script src="main.js?v=202611232114"></script>
+<script src="dash.js?v=202611232124"></script>
+<script src="sc.js?v=202611232124"></script>
+<script src="app.js?v=202611232124"></script>
+<script src="ramp.js?v=202611232124"></script>
+<script src="companies.js?v=202611232124"></script>
+<script src="owners.js?v=202611232124"></script>
+<script src="reviews.js?v=202611232124"></script>
+<script src="portfolio.js?v=202611232124"></script>
+<script src="commercial.js?v=202611232124"></script>
+<script src="exec.js?v=202611232124"></script>
+<script src="goals.js?v=202611232124"></script>
+<script src="weather.js?v=202611232124"></script>
+  <script src="map.js?v=202611232124"></script>
+<script src="comms.js?v=202611232124"></script>
+<script src="entry.js?v=202611232124"></script>
+<script src="main.js?v=202611232124"></script>
 </body>
 </html>
