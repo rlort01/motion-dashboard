@@ -7,7 +7,7 @@
 <title>Motion Dashboard</title>
 <link rel="icon" href="rings.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Source+Sans+3:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=202611232107">
+<link rel="stylesheet" href="styles.css?v=202611232114">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -70,6 +70,7 @@
     <button class="mp-tab" role="tab" data-tab="entry" aria-selected="false">Enter numbers</button>
     <button class="mp-tab" role="tab" data-tab="goals" aria-selected="false">Goals</button>
     <button class="mp-tab" role="tab" data-tab="exec" aria-selected="false" hidden>Executive</button>
+    <button class="mp-tab" role="tab" data-tab="commercial" aria-selected="false" hidden>Commercial</button>
     <button class="mp-tab" role="tab" data-tab="sources" aria-selected="false">Data sources &amp; checks</button>
   </div>
 
@@ -556,6 +557,40 @@
     </div>
   </section>
 
+  <section id="commercial" data-section hidden>
+    <h2 class="mp-h2">Commercial properties</h2>
+    <p class="mp-note">Commercial tenants in AppFolio: who paid this month, balances, lease end dates, open work orders, vacant suites and the owner's funds. Only Robert and Chylie can see this tab. <span id="coNote"></span></p>
+    <div class="mp-grid" style="margin: var(--cds-gap-sm) 0 var(--cds-gap-md)">
+      <div class="mp-card"><h3>Paid this month</h3><div class="mp-big" id="coPaid">—</div><div class="mp-meta" id="coPaidN"></div></div>
+      <div class="mp-card"><h3>Owed by tenants</h3><div class="mp-big" id="coOwed">—</div><div class="mp-meta" id="coOwedN"></div></div>
+      <div class="mp-card"><h3>Vacant suites</h3><div class="mp-big" id="coVac">—</div><div class="mp-meta" id="coVacN"></div></div>
+      <div class="mp-card"><h3>Leases ending soon</h3><div class="mp-big" id="coExp">—</div><div class="mp-meta" id="coExpN"></div></div>
+      <div class="mp-card"><h3>Open work orders</h3><div class="mp-big" id="coWo">—</div><div class="mp-meta" id="coWoN"></div></div>
+      <div class="mp-card"><h3>Property net</h3><div class="mp-big" id="coNet">—</div><div class="mp-meta" id="coNetN"></div></div>
+    </div>
+    <h3 class="mp-h3">Tenants</h3>
+    <p class="mp-note">Red rows owe money or haven't paid this month's rent. Lease dates within 6 months are flagged.</p>
+    <div class="mp-wrap mp-scroll"><table class="mp-table">
+      <thead><tr><th>Tenant</th><th>Suite</th><th class="mp-num">Monthly rent</th><th>This month</th><th class="mp-num">Balance owed</th><th>Last payment</th><th>Lease ends</th><th class="mp-num">Deposit held</th></tr></thead>
+      <tbody id="coTenants"></tbody></table></div>
+    <h3 class="mp-h3">Open work orders</h3>
+    <div class="mp-wrap mp-scroll"><table class="mp-table">
+      <thead><tr><th>Work order</th><th>Suite</th><th>Description</th><th>Priority</th><th>Status</th><th>Created</th><th>Vendor</th></tr></thead>
+      <tbody id="coWos"></tbody></table></div>
+    <h3 class="mp-h3">Vacant suites</h3>
+    <div class="mp-wrap mp-scroll"><table class="mp-table">
+      <thead><tr><th>Suite</th><th>Status</th><th class="mp-num">Sq ft</th><th class="mp-num">Market rent</th><th class="mp-num">Days vacant</th></tr></thead>
+      <tbody id="coVacant"></tbody></table></div>
+    <h3 class="mp-h3">Owner funds</h3>
+    <div class="mp-wrap"><table class="mp-table">
+      <thead><tr><th>Property</th><th>Owner</th><th class="mp-num">Cash held</th><th class="mp-num">Available to owner</th><th class="mp-num">Reserve</th></tr></thead>
+      <tbody id="coFunds"></tbody></table></div>
+    <h3 class="mp-h3">Income and expenses by month</h3>
+    <div class="mp-wrap"><table class="mp-table">
+      <thead><tr><th>Month</th><th class="mp-num">Income</th><th class="mp-num">Expenses</th><th class="mp-num">Net</th></tr></thead>
+      <tbody id="coPl"></tbody></table></div>
+  </section>
+
   <section id="exec" data-section hidden>
     <p class="mp-note" id="exNote">Loading…</p>
     <div class="mp-grid" style="margin: var(--cds-gap-sm) 0 var(--cds-gap-md)">
@@ -795,20 +830,21 @@
 </div>
 
 </div>
-<script src="dash.js?v=202611232107"></script>
-<script src="sc.js?v=202611232107"></script>
-<script src="app.js?v=202611232107"></script>
-<script src="ramp.js?v=202611232107"></script>
-<script src="companies.js?v=202611232107"></script>
-<script src="owners.js?v=202611232107"></script>
-<script src="reviews.js?v=202611232107"></script>
-<script src="portfolio.js?v=202611232107"></script>
-<script src="exec.js?v=202611232107"></script>
-<script src="goals.js?v=202611232107"></script>
-<script src="weather.js?v=202611232107"></script>
-  <script src="map.js?v=202611232107"></script>
-<script src="comms.js?v=202611232107"></script>
-<script src="entry.js?v=202611232107"></script>
-<script src="main.js?v=202611232107"></script>
+<script src="dash.js?v=202611232114"></script>
+<script src="sc.js?v=202611232114"></script>
+<script src="app.js?v=202611232114"></script>
+<script src="ramp.js?v=202611232114"></script>
+<script src="companies.js?v=202611232114"></script>
+<script src="owners.js?v=202611232114"></script>
+<script src="reviews.js?v=202611232114"></script>
+<script src="portfolio.js?v=202611232114"></script>
+<script src="commercial.js?v=202611232114"></script>
+<script src="exec.js?v=202611232114"></script>
+<script src="goals.js?v=202611232114"></script>
+<script src="weather.js?v=202611232114"></script>
+  <script src="map.js?v=202611232114"></script>
+<script src="comms.js?v=202611232114"></script>
+<script src="entry.js?v=202611232114"></script>
+<script src="main.js?v=202611232114"></script>
 </body>
 </html>
