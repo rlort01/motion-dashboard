@@ -20,8 +20,8 @@
     const vac = (rowsOf('vacancy') || []).filter((v) => /^vacant/i.test(v.STATUS || ''));
     const vacBy = d3.group(vac, (v) => key(v.ADDRESS));
     const board = rowsOf('board') || [];
-    const crit = d3.group(board.filter((r) => r.priority === 'Urgent' && !/inspection/i.test(r.kind || '')), (r) => key(r.address));
-    const oldWo = d3.group(board.filter((r) => r.days >= 30 && r.priority !== 'Urgent' && !/inspection/i.test(r.kind || '')), (r) => key(r.address));
+    const crit = d3.group(board.filter((r) => r.priority === 'Urgent' && (r.cat ? r.cat === 'work' : !/inspection/i.test(r.kind || ''))), (r) => key(r.address));
+    const oldWo = d3.group(board.filter((r) => r.days >= 30 && r.priority !== 'Urgent' && (r.cat ? r.cat === 'work' : !/inspection/i.test(r.kind || ''))), (r) => key(r.address));
     const m = dash.params().market;
     return props.filter((p) => p.LAT && (!m || m === 'Combined' || ST[m] === p.STATE)).map((p) => {
       const k = key(p.ADDRESS), ended = p.END && t(p.END) <= now, leaving = p.END && t(p.END) > now;

@@ -73,7 +73,7 @@
     inputs: ['monthly', 'maint', 'current'],
     fn: (monthly, maint, current) => {
       const p = dash.params();
-      const groups = { Combined: ['GA-ATL', 'GA-MAC', 'TN-CHA', 'NC-CLT', 'NC-RAL'], Georgia: ['GA-ATL', 'GA-MAC'], Tennessee: ['TN-CHA'], 'North Carolina': ['NC-CLT', 'NC-RAL'] }[p.market] || ['GA-ATL', 'GA-MAC', 'TN-CHA', 'NC-CLT', 'NC-RAL'];
+      const groups = { Combined: ['GA-ATL', 'GA-MAC', 'GA-FTV', 'TN-CHA', 'NC-CLT', 'NC-RAL'], Georgia: ['GA-ATL', 'GA-MAC', 'GA-FTV'], Tennessee: ['TN-CHA'], 'North Carolina': ['NC-CLT', 'NC-RAL'] }[p.market] || ['GA-ATL', 'GA-MAC', 'GA-FTV', 'TN-CHA', 'NC-CLT', 'NC-RAL'];
       const month = p.month || '2026-11';
       const m = monthly.filter((r) => r.MONTH === month && groups.includes(r.GROUP));
       const w = maint.filter((r) => r.MONTH === month && groups.includes(r.GROUP));
@@ -114,7 +114,7 @@
     inputs: ['monthly', 'maint'],
     fn: (monthly, maint) => {
       const p = dash.params();
-      const groups = { Combined: ['GA-ATL', 'GA-MAC', 'TN-CHA', 'NC-CLT', 'NC-RAL'], Georgia: ['GA-ATL', 'GA-MAC'], Tennessee: ['TN-CHA'], 'North Carolina': ['NC-CLT', 'NC-RAL'] }[p.market] || ['GA-ATL', 'GA-MAC', 'TN-CHA', 'NC-CLT', 'NC-RAL'];
+      const groups = { Combined: ['GA-ATL', 'GA-MAC', 'GA-FTV', 'TN-CHA', 'NC-CLT', 'NC-RAL'], Georgia: ['GA-ATL', 'GA-MAC', 'GA-FTV'], Tennessee: ['TN-CHA'], 'North Carolina': ['NC-CLT', 'NC-RAL'] }[p.market] || ['GA-ATL', 'GA-MAC', 'GA-FTV', 'TN-CHA', 'NC-CLT', 'NC-RAL'];
       const months = Array.from(new Set(monthly.map((r) => r.MONTH))).sort();
       const round = (v, k) => (v === null || !isFinite(v) ? null : Math.round(v * k) / k);
       return months.map((month) => {
@@ -140,10 +140,15 @@
 
   // Request type for a work order: inspections (mid-lease, move-in/out, other), unit turns, recurring services and
   // repairs, from the AppFolio work-order list (wo_types) with a description fallback for brand-new work orders.
+  // Pest, wildlife, roof and similar "inspections" by an outside vendor are real work, not routine inspections.
+  const REAL_INSP = /pest|wildlife|termite|rodent|mold|roof|sewer|camera|septic|foundation|structural|hvac|chimney/i;
+  const TT_CHECK = /tenant ?turner|\btt\b|lock ?box|marketing photos|showing box/i;
   const woKind = (wo, desc, types) => {
     const t = types.get(wo) || {};
-    let insp = t.INSP || '';
-    if (!insp && /inspect/i.test(desc || '')) insp = /mid.?lease|quarter|semi|annual|periodic/i.test(desc) ? 'Mid-lease' : /move.?in/i.test(desc) ? 'Move-in' : /move.?out/i.test(desc) ? 'Move-out' : 'Other inspection';
+    let insp = REAL_INSP.test(desc || '') ? '' : t.INSP || '';
+    if (TT_CHECK.test(desc || '')) return 'Tenant Turner / lockbox check';
+    if (/mid.?lease|quarterly inspection|semi.?annual inspection|annual inspection|periodic inspection/i.test(desc || '')) return 'Mid-lease inspection';
+    if (!insp && /inspect/i.test(desc || '') && !REAL_INSP.test(desc || '')) insp = /mid.?lease|quarter|semi|annual|periodic/i.test(desc) ? 'Mid-lease' : /move.?in/i.test(desc) ? 'Move-in' : /move.?out/i.test(desc) ? 'Move-out' : 'Other inspection';
     if (insp === 'Mid-lease') return 'Mid-lease inspection';
     if (insp === 'Move-in' || insp === 'Move-out') return 'Move-in/out inspection';
     if (insp) return 'Other inspection';
@@ -152,6 +157,11 @@
     return 'Repair';
   };
   window.mpWoKind = woKind;
+  // Three groups: real work orders (owner or tenant requests, repairs, turns), mid-lease inspections,
+  // and other inspections and checks (move-in/out, other inspections, Tenant Turner and lockbox checks).
+  const WOCAT = { work: 'Work orders', mid: 'Mid-lease inspections', other: 'Other inspections & checks' };
+  const woCat = (kind) => (kind === 'Mid-lease inspection' ? 'mid' : /inspection|tenant turner/i.test(kind) ? 'other' : 'work');
+  window.mpWoCat = woCat;
   const woTypes = () => { const d = dash.data('wo_types'); return new Map(d.status === 'ok' ? d.data.map((r) => [r.WO, r]) : []); };
 
   dash.calc('board', {
@@ -161,7 +171,7 @@
     fn: (afWo, jobs, wt) => {
       const types = new Map((wt || []).map((r) => [r.WO, r]));
       const p = dash.params();
-      const groups = { Combined: ['GA-ATL', 'GA-MAC', 'TN-CHA', 'NC-CLT', 'NC-RAL'], Georgia: ['GA-ATL', 'GA-MAC'], Tennessee: ['TN-CHA'], 'North Carolina': ['NC-CLT', 'NC-RAL'] }[p.market] || ['GA-ATL', 'GA-MAC', 'TN-CHA', 'NC-CLT', 'NC-RAL'];
+      const groups = { Combined: ['GA-ATL', 'GA-MAC', 'GA-FTV', 'TN-CHA', 'NC-CLT', 'NC-RAL'], Georgia: ['GA-ATL', 'GA-MAC', 'GA-FTV'], Tennessee: ['TN-CHA'], 'North Carolina': ['NC-CLT', 'NC-RAL'] }[p.market] || ['GA-ATL', 'GA-MAC', 'GA-FTV', 'TN-CHA', 'NC-CLT', 'NC-RAL'];
       const ak = (s) => { const t = String(s || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean); return t.length >= 2 ? t[0] + ' ' + t[1] : null; };
       const byWo = new Map(), byAddr = new Map();
       jobs.forEach((j) => { if (j.wo) byWo.set(j.wo, j); const k = ak(j.street); if (k && !byAddr.has(k)) byAddr.set(k, j); });
@@ -171,7 +181,7 @@
         const jj = j || ja;
         return {
           wo: w.WO, group: w.GROUP, address: w.ADDRESS, desc: w.DESC, status: w.STATUS, priority: w.PRIORITY,
-          kind: woKind(w.WO, w.DESC, types), issue: (types.get(w.WO) || {}).ISSUE || '',
+          kind: woKind(w.WO, w.DESC, types), cat: woCat(woKind(w.WO, w.DESC, types)), issue: (types.get(w.WO) || {}).ISSUE || '',
           days: +w.DAYS, vendor: w.VENDOR,
           jobberJob: jj ? jj.job : null, jobberStatus: jj ? jj.status : null, jobberDate: jj ? jj.start : null,
           jobberUrl: jj ? jj.url : null, match: j ? 'wo' : ja ? 'address' : null
@@ -189,7 +199,7 @@
     title: 'Work-order board totals',
     description: 'Counts from the open work-order board.',
     inputs: ['board', 'jobber_jobs', 'owner_wo'],
-    fn: (board, jobs, ow) => { const owners = new Set(ow.map((r) => r.WO)); return [{
+    fn: (board0, jobs, ow) => { const owners = new Set(ow.map((r) => r.WO)); const c = (window.mpView && window.mpView.wocat) || 'work'; const board = c === 'all' ? board0 : board0.filter((r) => r.cat === c); return [{
       open: board.length,
       linked: board.filter((r) => r.jobberJob).length,
       stale: board.filter((r) => !r.jobberJob && r.days >= 30 && !isOwnerWo(r, owners)).length,
@@ -245,7 +255,7 @@
     inputs: ['gaps', 'jobber_inv_open', 'jobber_inv_draft'],
     fn: (gaps, open, drafts) => {
       const p = dash.params();
-      const groups = { Combined: ['GA-ATL', 'GA-MAC', 'TN-CHA', 'NC-CLT', 'NC-RAL'], Georgia: ['GA-ATL', 'GA-MAC'], Tennessee: ['TN-CHA'], 'North Carolina': ['NC-CLT', 'NC-RAL'] }[p.market] || ['GA-ATL', 'GA-MAC', 'TN-CHA', 'NC-CLT', 'NC-RAL'];
+      const groups = { Combined: ['GA-ATL', 'GA-MAC', 'GA-FTV', 'TN-CHA', 'NC-CLT', 'NC-RAL'], Georgia: ['GA-ATL', 'GA-MAC', 'GA-FTV'], Tennessee: ['TN-CHA'], 'North Carolina': ['NC-CLT', 'NC-RAL'] }[p.market] || ['GA-ATL', 'GA-MAC', 'GA-FTV', 'TN-CHA', 'NC-CLT', 'NC-RAL'];
       const inv = new Map();
       drafts.concat(open).forEach((i) => { if (i.wo && !inv.has(i.wo)) inv.set(i.wo, i); });
       return gaps.filter((g) => groups.includes(g.GROUP)).map((g) => {
@@ -305,7 +315,7 @@
   const h = (location.hash || '').slice(1);
   if (['scorecard', 'workorders', 'billing', 'comms', 'portfolio', 'map', 'goals', 'entry', 'exec'].includes(h)) showTab(h);
 
-  window.mpView = { wo: 'all', inv: 'attention', gap: 'V' };
+  window.mpView = { wo: 'all', inv: 'attention', gap: 'V', wocat: 'work' };
   const chipGroup = (attr, key, draw) => {
     document.querySelectorAll('[data-' + attr + ']').forEach((b) => b.addEventListener('click', () => {
       window.mpView[key] = b.getAttribute('data-' + attr);
@@ -315,6 +325,13 @@
   };
   chipGroup('woview', 'wo', 'boardRows');
   chipGroup('wotype', 'wotype', 'boardRows');
+  // Category switch: changes the board, the tiles above it and the labels.
+  document.querySelectorAll('[data-wocat]').forEach((b) => b.addEventListener('click', () => {
+    window.mpView.wocat = b.getAttribute('data-wocat');
+    document.querySelectorAll('[data-wocat]').forEach((x) => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+    const all = document.querySelector('[data-wotype="all"]'); if (all && all.getAttribute('aria-pressed') !== 'true' && !b.dataset.keepType) all.click();
+    dash._redraw();
+  }));
   chipGroup('invview', 'inv', 'invRows');
   chipGroup('gapview', 'gap', 'gapTable');
 
@@ -451,7 +468,8 @@
     tb.replaceChildren();
     if (d.status !== 'ok') return;
     const v = window.mpView.wo, owners = ownerSet(), k = window.mpView.wotype || 'all';
-    const kindOk = (r) => k === 'all' || (k === 'critical' ? r.priority === 'Urgent' && !/inspection/i.test(r.kind) : k === 'inspections' ? /inspection/i.test(r.kind) : r.kind === k);
+    const wc = window.mpView.wocat || 'work';
+    const kindOk = (r) => (wc === 'all' || r.cat === wc) && (k === 'all' || (k === 'critical' ? r.priority === 'Urgent' && !/inspection/i.test(r.kind) : k === 'inspections' ? /inspection/i.test(r.kind) : r.kind === k));
     d.data.filter(kindOk).filter((r) => v === 'all' || (v === 'linked' && r.jobberJob) || (v === 'nojob' && !r.jobberJob) || (v === 'old' && r.days >= 30) || (v === 'owner' && isOwnerWo(r, owners))).forEach((r) => {
       const tr = document.createElement('tr'); tr.setAttribute('data-key', r.wo);
       if (isOwnerWo(r, owners)) { tr.className = 'mp-owner'; tr.title = 'The owner is handling this work order'; }
@@ -473,7 +491,7 @@
     tb.replaceChildren();
     if (b.status !== 'ok') return;
     const types = woTypes(), now = Date.now(), DAY = 86400000;
-    const K = ['Repair', 'Mid-lease inspection', 'Move-in/out inspection', 'Other inspection', 'Unit turn', 'Recurring service'];
+    const K = ['Repair', 'Unit turn', 'Recurring service', 'Mid-lease inspection', 'Move-in/out inspection', 'Other inspection', 'Tenant Turner / lockbox check'];
     const S = new Map(K.map((k) => [k, { k, open: 0, crit: 0, old: 0, made: 0, done: 0, days: [] }]));
     b.data.forEach((r) => { const s = S.get(r.kind); if (!s) return; s.open++; if (r.priority === 'Urgent' && !/inspection/i.test(r.kind)) s.crit++; if (r.days >= 30) s.old++; });
     if (t.status === 'ok') t.data.forEach((r) => {
@@ -483,19 +501,32 @@
       if (f && now - f <= 30 * DAY) s.done++;
       if (f && now - f <= 90 * DAY) s.days.push((f - c) / DAY);
     });
+    let lastCat = '';
     K.forEach((k) => {
+      const cat = woCat(k);
+      if (cat !== lastCat) { lastCat = cat; const h = document.createElement('tr'); h.className = 'mp-entry-sec'; const c = td(h, WOCAT[cat]); c.colSpan = 7; tb.appendChild(h); }
       const s = S.get(k), tr = document.createElement('tr');
       td(tr, k); td(tr, s.open, 'mp-num'); const cc = td(tr, s.crit || '', 'mp-num'); if (s.crit) cc.style.color = 'var(--color-bad)';
       td(tr, s.old || '', 'mp-num'); td(tr, s.made, 'mp-num'); td(tr, s.done, 'mp-num');
       td(tr, s.days.length ? d3.median(s.days).toFixed(0) + ' days' : '—', 'mp-num');
       tr.style.cursor = 'pointer'; tr.title = 'Show these on the board below';
-      tr.addEventListener('click', () => { const btn = document.querySelector('[data-wotype="' + k + '"]'); if (btn) btn.click(); document.getElementById('board').scrollIntoView({ behavior: 'smooth' }); });
+      tr.addEventListener('click', () => { const cb = document.querySelector('[data-wocat="' + woCat(k) + '"]'); if (cb) cb.click(); const btn = document.querySelector('[data-wotype="' + k + '"]'); if (btn) btn.click(); document.getElementById('board').scrollIntoView({ behavior: 'smooth' }); });
       tb.appendChild(tr);
     });
   });
-  dash.draw('bCrit', (el) => { const b = dash.data('board'); el.textContent = b.status === 'ok' ? b.data.filter((r) => r.priority === 'Urgent' && !/inspection/i.test(r.kind)).length : '—'; });
-  dash.draw('bInsp', (el) => { const b = dash.data('board'); el.textContent = b.status === 'ok' ? b.data.filter((r) => /inspection/i.test(r.kind)).length : '—'; });
-  dash.draw('bInspN', (el) => { const b = dash.data('board'); if (b.status !== 'ok') return; const m = b.data.filter((r) => r.kind === 'Mid-lease inspection').length; el.textContent = m + ' mid-lease · ' + b.data.filter((r) => r.kind === 'Move-in/out inspection').length + ' move-in/out'; });
+  dash.draw('bCrit', (el) => { const b = dash.data('board'); el.textContent = b.status === 'ok' ? b.data.filter((r) => r.priority === 'Urgent' && r.cat === 'work').length : '—'; });
+  dash.draw('bInsp', (el) => { const b = dash.data('board'); el.textContent = b.status === 'ok' ? b.data.filter((r) => r.cat !== 'work').length : '—'; });
+  dash.draw('bInspN', (el) => { const b = dash.data('board'); if (b.status !== 'ok') return; el.textContent = b.data.filter((r) => r.cat === 'mid').length + ' mid-lease · ' + b.data.filter((r) => r.cat === 'other').length + ' other inspections & checks'; });
+  // Counts on the three category buttons.
+  dash.draw('woCatCounts', (el) => {
+    const b = dash.data('board'); if (b.status !== 'ok') return;
+    document.querySelectorAll('[data-wocat]').forEach((btn) => {
+      const c = btn.getAttribute('data-wocat'), n = c === 'all' ? b.data.length : b.data.filter((r) => r.cat === c).length;
+      btn.textContent = (c === 'all' ? 'Everything' : WOCAT[c]) + ' (' + n + ')';
+    });
+    el.textContent = '';
+  });
+  dash.draw('woCatLabel', (el) => { const c = window.mpView.wocat || 'work'; el.textContent = c === 'all' ? 'all open AppFolio work orders, inspections and checks' : WOCAT[c].toLowerCase(); });
 
   dash.draw('jobberOnlyRows', (tb) => {
     const d = dash.data('jobberOnly');

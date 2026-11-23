@@ -158,6 +158,20 @@
           put('r42', mk, +mo, b / list.length, 'Average billed to the owner per rehab, ' + list.length + ' rehab(s)', 'AppFolio');
         });
       }
+      // Revenue per unit = revenue per door x doors / units (same revenue, divided by units instead of doors).
+      {
+        const get = (id, mk, mo) => { const i = at.get(id + '|' + mk + '|' + mo); return i === undefined ? null : rows[i].VALUE === '' ? null : +rows[i].VALUE; };
+        for (let mo = 1; mo <= 12; mo++) {
+          let rev = 0, units = 0;
+          ['Georgia', 'Tennessee', 'North Carolina'].forEach((mk) => {
+            const r = get('r30', mk, mo), dr = get('eom_doors', mk, mo), u = get('eom_units', mk, mo);
+            if (r === null || !dr || !u) return;
+            put('r30u', mk, mo, r * dr / u, 'Same AppFolio revenue divided by ' + u + ' units (' + dr + ' doors)', 'AppFolio');
+            rev += r * dr; units += u;
+          });
+          if (units) put('r30u', 'Combined', mo, rev / units, 'Revenue across all markets divided by ' + units + ' units', 'AppFolio');
+        }
+      }
       // r36, r40-r44 from Jobber (built by jobber_metrics.py in the Jobber refresh).
       const jm = ds('jobber_metrics');
       if (jm) jm.forEach((r) => { if (+r.MONTH <= curMo) put(r.ID, r.MARKET, +r.MONTH, +r.VALUE, r.NOTE, 'Jobber'); });
@@ -169,6 +183,13 @@
         // Retired metrics: search ranking and NPS (not tracked)
         const DROP = new Set(['r56', 'r58']);
         d.rows = d.rows.filter((r) => !DROP.has(r.ID));
+        // Revenue per unit, shown under revenue per door (track only, no goal).
+        if (!d.rows.some((r) => r.ID === 'r30u')) {
+          const out = []; let last = -1;
+          d.rows.forEach((r, i) => { out.push(r); if (r.ID === 'r30') last = out.length; });
+          if (last > 0) out.splice(last, 0, ...d.rows.filter((r) => r.ID === 'r30').map((r) => Object.assign({}, r, { ID: 'r30u', METRIC: 'Revenue Per Unit Per Month', VALUE: '', GOAL: '', GOAL_TEXT: '', DIR: 'N' })));
+          d.rows = out;
+        }
         const g26 = new Map(window.mpGoals.filter((g) => g.year === 2026).map((g) => [g.metric_id, g]));
         if (g26.size) d.rows = d.rows.map((r) => { const g = g26.get(r.ID); return g ? Object.assign({}, r, { GOAL: g.goal === null ? '' : String(g.goal), GOAL_TEXT: g.goal_text || (g.goal === null ? '' : String(g.goal)), DIR: g.dir }) : r; });
         window.mpWorkbook = d.rows;

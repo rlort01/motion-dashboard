@@ -7,7 +7,7 @@
 <title>Motion Dashboard</title>
 <link rel="icon" href="rings.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Source+Sans+3:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=202611231913">
+<link rel="stylesheet" href="styles.css?v=202611231917">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -185,16 +185,24 @@
 
   <section id="workorders" data-section hidden>
     <p class="mp-note">Open AppFolio work orders next to the Jobber job created for them. A job is linked when its title carries the AppFolio work order number, or failing that when the street address matches.</p>
+    <div class="mp-chips" role="group" aria-label="Which work orders" style="margin-bottom: var(--cds-gap-sm)">
+      <button class="mp-chip mp-mapfull" data-wocat="work" aria-pressed="true">Work orders</button>
+      <button class="mp-chip" data-wocat="mid" aria-pressed="false">Mid-lease inspections</button>
+      <button class="mp-chip" data-wocat="other" aria-pressed="false">Other inspections &amp; checks</button>
+      <button class="mp-chip" data-wocat="all" aria-pressed="false">Everything</button>
+      <span data-draw="woCatCounts" data-source="board"></span>
+    </div>
+    <p class="mp-meta" style="margin-top:0">Work orders = owner and tenant requests, repairs, unit turns and recurring service. Inspections and checks (mid-lease, move-in/out, Tenant Turner and lockbox visits) are kept separate so they don't throw off response times. The tiles and board below show <strong data-draw="woCatLabel">work orders</strong>.</p>
     <div class="mp-grid" style="margin-bottom: var(--cds-gap-md)">
       <div class="mp-card"><h3>Open AppFolio work orders</h3><div class="mp-big" data-source="boardSum" data-field="open" data-row="0" data-draw="bOpen">—</div><div class="mp-meta">Not completed or canceled</div></div>
       <div class="mp-card"><h3>Linked to a Jobber job</h3><div class="mp-big" data-source="boardSum" data-field="linked" data-row="0" data-draw="bLinked">—</div><div class="mp-meta">Active Jobber jobs</div></div>
       <div class="mp-card"><h3>Open 30+ days with no Jobber job</h3><div class="mp-big" data-source="boardSum" data-field="stale" data-row="0" data-draw="bStale">—</div><div class="mp-meta">Owner-handled work orders not counted</div></div>
       <div class="mp-card"><h3>Jobber jobs late or needing action</h3><div class="mp-big" data-source="boardSum" data-field="jobberAttn" data-row="0" data-draw="bAttn">—</div><div class="mp-meta">Jobber status late or action required</div></div>
-      <div class="mp-card"><h3>Critical work orders open</h3><div class="mp-big" data-source="board" data-draw="bCrit" style="color: var(--color-bad)">—</div><div class="mp-meta">Marked Urgent in AppFolio, inspections excluded</div></div>
-      <div class="mp-card"><h3>Inspections open</h3><div class="mp-big" data-source="board" data-draw="bInsp">—</div><div class="mp-meta" data-draw="bInspN">—</div></div>
+      <div class="mp-card"><h3>Critical work orders open</h3><div class="mp-big" data-source="board" data-draw="bCrit" style="color: var(--color-bad)">—</div><div class="mp-meta">Marked Urgent in AppFolio, work orders only</div></div>
+      <div class="mp-card"><h3>Inspections &amp; checks open</h3><div class="mp-big" data-source="board" data-draw="bInsp">—</div><div class="mp-meta" data-draw="bInspN">—</div></div>
     </div>
     <h2 class="mp-h2">By request type</h2>
-    <p class="mp-note">Inspections are kept apart from repairs so they don't hide critical work. Critical means AppFolio priority Urgent. Click a row to filter the board. Completion time is the typical days from created to completed for work orders finished in the last 90 days.</p>
+    <p class="mp-note">Grouped into work orders, mid-lease inspections, and other inspections &amp; checks. Critical means AppFolio priority Urgent. Click a row to filter the board. Completion time is the typical days from created to completed for work orders finished in the last 90 days.</p>
     <div class="mp-wrap">
       <table class="mp-table" data-source="board">
         <thead><tr><th>Request type</th><th class="mp-num">Open</th><th class="mp-num">Critical open</th><th class="mp-num">Open 30+ days</th><th class="mp-num">Created, last 30 days</th><th class="mp-num">Completed, last 30 days</th><th class="mp-num">Typical days to complete</th></tr></thead>
@@ -209,6 +217,7 @@
       <button class="mp-chip" data-wotype="Mid-lease inspection" aria-pressed="false">Mid-lease</button>
       <button class="mp-chip" data-wotype="Move-in/out inspection" aria-pressed="false">Move-in/out</button>
       <button class="mp-chip" data-wotype="Unit turn" aria-pressed="false">Unit turns</button>
+      <button class="mp-chip" data-wotype="Tenant Turner / lockbox check" aria-pressed="false">Tenant Turner checks</button>
       <button class="mp-chip" data-wotype="Recurring service" aria-pressed="false">Recurring</button>
     </div>
     <div class="mp-chips" id="wo-view" role="group" aria-label="Show">
@@ -767,20 +776,20 @@
 </div>
 
 </div>
-<script src="dash.js?v=202611231913"></script>
-<script src="sc.js?v=202611231913"></script>
-<script src="app.js?v=202611231913"></script>
-<script src="ramp.js?v=202611231913"></script>
-<script src="companies.js?v=202611231913"></script>
-<script src="owners.js?v=202611231913"></script>
-<script src="reviews.js?v=202611231913"></script>
-<script src="portfolio.js?v=202611231913"></script>
-<script src="exec.js?v=202611231913"></script>
-<script src="goals.js?v=202611231913"></script>
-<script src="weather.js?v=202611231913"></script>
-  <script src="map.js?v=202611231913"></script>
-<script src="comms.js?v=202611231913"></script>
-<script src="entry.js?v=202611231913"></script>
-<script src="main.js?v=202611231913"></script>
+<script src="dash.js?v=202611231917"></script>
+<script src="sc.js?v=202611231917"></script>
+<script src="app.js?v=202611231917"></script>
+<script src="ramp.js?v=202611231917"></script>
+<script src="companies.js?v=202611231917"></script>
+<script src="owners.js?v=202611231917"></script>
+<script src="reviews.js?v=202611231917"></script>
+<script src="portfolio.js?v=202611231917"></script>
+<script src="exec.js?v=202611231917"></script>
+<script src="goals.js?v=202611231917"></script>
+<script src="weather.js?v=202611231917"></script>
+  <script src="map.js?v=202611231917"></script>
+<script src="comms.js?v=202611231917"></script>
+<script src="entry.js?v=202611231917"></script>
+<script src="main.js?v=202611231917"></script>
 </body>
 </html>
