@@ -7,7 +7,7 @@
 <title>Motion Dashboard</title>
 <link rel="icon" href="rings.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Source+Sans+3:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=202611232124">
+<link rel="stylesheet" href="styles.css?v=202611232140">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -52,10 +52,14 @@
     <label id="fltMarket">Market
       <select class="dash-select" data-draw="marketSel" aria-label="Market"></select>
     </label>
-    <label id="fltMonth">Month
-      <select class="dash-select" data-draw="yearSel" aria-label="Year" data-source="sc2026"></select>
-      <select class="dash-select" data-draw="monthSel" aria-label="Month or full year" data-source="sc2026"></select>
-    </label>
+    <span id="fltMonth" class="mp-bar-group">
+      <label>Year
+        <select class="dash-select" data-draw="yearSel" aria-label="Year" data-source="sc2026"></select>
+      </label>
+      <label>Month
+        <select class="dash-select" data-draw="monthSel" aria-label="Month or full year" data-source="sc2026"></select>
+      </label>
+    </span>
     <span class="mp-note" id="fltNone" hidden>This tab covers all markets.</span>
   </div>
 
@@ -860,21 +864,21 @@
 </div>
 
 </div>
-<script src="dash.js?v=202611232124"></script>
-<script src="sc.js?v=202611232124"></script>
-<script src="app.js?v=202611232124"></script>
-<script src="ramp.js?v=202611232124"></script>
-<script src="companies.js?v=202611232124"></script>
-<script src="owners.js?v=202611232124"></script>
-<script src="reviews.js?v=202611232124"></script>
-<script src="portfolio.js?v=202611232124"></script>
-<script src="commercial.js?v=202611232124"></script>
-<script src="exec.js?v=202611232124"></script>
-<script src="goals.js?v=202611232124"></script>
-<script src="weather.js?v=202611232124"></script>
-  <script src="map.js?v=202611232124"></script>
-<script src="comms.js?v=202611232124"></script>
-<script src="entry.js?v=202611232124"></script>
-<script src="main.js?v=202611232124"></script>
+<script src="dash.js?v=202611232140"></script>
+<script src="sc.js?v=202611232140"></script>
+<script src="app.js?v=202611232140"></script>
+<script src="ramp.js?v=202611232140"></script>
+<script src="companies.js?v=202611232140"></script>
+<script src="owners.js?v=202611232140"></script>
+<script src="reviews.js?v=202611232140"></script>
+<script src="portfolio.js?v=202611232140"></script>
+<script src="commercial.js?v=202611232140"></script>
+<script src="exec.js?v=202611232140"></script>
+<script src="goals.js?v=202611232140"></script>
+<script src="weather.js?v=202611232140"></script>
+  <script src="map.js?v=202611232140"></script>
+<script src="comms.js?v=202611232140"></script>
+<script src="entry.js?v=202611232140"></script>
+<script src="main.js?v=202611232140"></script>
 </body>
 </html>
