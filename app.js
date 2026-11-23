@@ -302,6 +302,13 @@
     document.querySelectorAll('[data-section]').forEach((s) => { s.hidden = s.id !== id; });
     document.querySelectorAll('.mp-tab').forEach((b) => b.setAttribute('aria-selected', b.dataset.tab === id ? 'true' : 'false'));
     dash.setLink(id);
+    // Only show the filters the tab actually uses.
+    const useMkt = ['scorecard', 'workorders', 'billing', 'portfolio', 'map'].includes(id);
+    const fm = document.getElementById('fltMarket'), fo = document.getElementById('fltMonth'), fn = document.getElementById('fltNone');
+    if (fm) fm.hidden = !useMkt;
+    if (fo) fo.hidden = id !== 'scorecard';
+    if (fn) fn.hidden = useMkt || ['entry', 'sources'].includes(id);
+    if (document.getElementById('filters')) document.getElementById('filters').hidden = id === 'entry' || id === 'sources';
     window.dispatchEvent(new CustomEvent('mp-tab', { detail: id }));
     // Redraw when a tab is shown, so its tables are always built from the current data.
     dash._redraw();

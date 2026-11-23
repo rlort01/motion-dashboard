@@ -15,6 +15,9 @@
   const ET = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', hour12: false });
   const isBiz = (s) => { const p = Object.fromEntries(ET.formatToParts(new Date(s)).map((x) => [x.type, x.value])); const h = +p.hour % 24; return !['Sat', 'Sun'].includes(p.weekday) && h >= 8 && h < 18; };
 
+  // The main number (8445) rings the "Motion PMG - Georgia" call queue.
+  const MAIN = 'Motion PMG - Georgia';
+  const isMain = (r) => r.LINE === MAIN;
   const calls = () => (rowsOf('comm_calls') || []).filter((r) => inPeriod(r.START));
   // Business hours between two times: Mon-Fri 8:00-18:00 Eastern.
   const bizH = (a, b) => {
@@ -33,20 +36,29 @@
   };
   const mails = () => (rowsOf('resp_email') || []).filter((r) => inPeriod(r.RECEIVED)).map(norm);
 
-  const sum = () => {
-    const c = calls(), inn = c.filter((r) => r.DIR === 'in'), out = c.filter((r) => r.DIR === 'out');
+  const sum = (pred) => {
+    const c = calls(), inn = c.filter((r) => r.DIR === 'in' && pred(r)), out = c.filter((r) => r.DIR === 'out');
     const ans = inn.filter((r) => r.ANSWERED), miss = inn.filter((r) => !r.ANSWERED), missBiz = miss.filter((r) => isBiz(r.START));
     const back = miss.filter((r) => r.CALLBACK_MIN !== null || r.CALLED_AGAIN);
     const m = mails(), rep = m.filter((r) => r._rep);
     return {
       inN: inn.length, ans: ans.length, miss: miss.length, missBiz: missBiz.length, back: back.length, notBack: miss.length - back.length,
       cbMed: med(miss.filter((r) => r.CALLBACK_MIN !== null).map((r) => +r.CALLBACK_MIN)),
-      wait: med(ans.filter((r) => r.LINE && r.WAIT_S !== null).map((r) => +r.WAIT_S)),
+      wait: med(ans.filter((r) => r.WAIT_S !== null).map((r) => +r.WAIT_S)),
       outN: out.length, talkHr: d3.sum(c, (r) => +r.TALK_S || 0) / 3600,
       mN: m.length, mRep: rep.length, mMed: med(rep.map((r) => r._bh)), mAf: rep.filter((r) => r._via === 'AppFolio').length, mWait: m.length - rep.length,
     };
   };
-  const tile = (name, f) => dash.draw(name, (el) => { el.textContent = rowsOf('comm_calls') || rowsOf('resp_email') ? f(sum()) : '—'; });
+  const tile = (name, f, pred) => dash.draw(name, (el) => { el.textContent = rowsOf('comm_calls') || rowsOf('resp_email') ? f(sum(pred || ((r) => !isMain(r)))) : '—'; });
+  // Main line (8445)
+  tile('cmMainIn', (s) => String(s.inN), isMain);
+  tile('cmMainInN', (s) => pct(s.ans, s.inN) + ' answered by a person', isMain);
+  tile('cmMainMiss', (s) => String(s.miss), isMain);
+  tile('cmMainMissN', (s) => s.missBiz + ' during business hours · ' + s.notBack + ' never called back' + (s.cbMed !== null ? ' · callbacks took ' + fmtMin(s.cbMed) + ' (typical)' : ''), isMain);
+  tile('cmMainBack', (s) => String(s.notBack), isMain);
+  tile('cmMainBackN', (s) => (s.miss ? pct(s.back, s.miss) + ' of missed callers were called back or got through later' : 'No missed calls'), isMain);
+  tile('cmWait', (s) => fmtSec(s.wait), isMain);
+  // Everyone else: direct numbers and the Tennessee queue
   tile('cmIn', (s) => String(s.inN));
   tile('cmInN', (s) => pct(s.ans, s.inN) + ' answered by a person');
   tile('cmMiss', (s) => String(s.miss));
@@ -63,20 +75,20 @@
     const c = calls(), m = mails();
     if (!rowsOf('comm_calls') && !rowsOf('resp_email')) return;
     const P = new Map();
-    const p = (n) => { if (!P.has(n)) P.set(n, { name: n, ans: 0, miss: 0, out: 0, talk: 0, cb: [], cbN: 0, mail: 0, rep: 0, repH: [] }); return P.get(n); };
+    const p = (n) => { if (!P.has(n)) P.set(n, { name: n, mainAns: 0, ans: 0, miss: 0, out: 0, talk: 0, cb: [], cbN: 0, mail: 0, rep: 0, repH: [] }); return P.get(n); };
     c.forEach((r) => {
-      if (r.DIR === 'in' && r.ANSWERED && r.STAFF) { const x = p(r.STAFF); x.ans++; x.talk += +r.TALK_S || 0; }
+      if (r.DIR === 'in' && r.ANSWERED && r.STAFF) { const x = p(r.STAFF); if (isMain(r)) x.mainAns++; else x.ans++; x.talk += +r.TALK_S || 0; }
       if (r.DIR === 'in' && !r.ANSWERED && r.STAFF && !r.LINE) p(r.STAFF).miss++;
       if (r.DIR === 'out' && r.STAFF) { const x = p(r.STAFF); x.out++; x.talk += +r.TALK_S || 0; }
       if (r.DIR === 'in' && !r.ANSWERED && r.CALLED_BACK_BY) { const x = p(r.CALLED_BACK_BY); x.cbN++; x.cb.push(+r.CALLBACK_MIN); }
     });
     m.forEach((r) => { const x = p(r.NAME); x.mail++; });
     m.filter((r) => r._rep && r._by).forEach((r) => { const x = p(r._by); x.rep++; x.repH.push(r._bh); });
-    const list = Array.from(P.values()).filter((x) => x.name && !/^Motion PMG\b/.test(x.name)).sort((a, b) => (b.ans + b.out + b.mail) - (a.ans + a.out + a.mail));
+    const list = Array.from(P.values()).filter((x) => x.name && !/^Motion PMG\b/.test(x.name)).sort((a, b) => (b.mainAns + b.ans + b.out + b.mail) - (a.mainAns + a.ans + a.out + a.mail));
     if (!list.length) { const tr = document.createElement('tr'); td(tr, 'No calls or emails in this period.'); tb.appendChild(tr); return; }
     list.forEach((x) => {
       const tr = document.createElement('tr');
-      td(tr, x.name); td(tr, x.ans, 'mp-num'); td(tr, x.miss || '', 'mp-num'); td(tr, x.out, 'mp-num'); td(tr, (x.talk / 3600).toFixed(1), 'mp-num');
+      td(tr, x.name); td(tr, x.mainAns || '', 'mp-num'); td(tr, x.ans || '', 'mp-num'); td(tr, x.miss || '', 'mp-num'); td(tr, x.out, 'mp-num'); td(tr, (x.talk / 3600).toFixed(1), 'mp-num');
       td(tr, x.cbN ? x.cbN + ' · ' + fmtMin(med(x.cb)) : '', 'mp-num');
       td(tr, x.mail || '', 'mp-num'); td(tr, x.rep ? x.rep + ' · ' + fmtHr(med(x.repH)) : '', 'mp-num');
       tb.appendChild(tr);
@@ -84,15 +96,15 @@
   });
 
   // Unanswered calls, newest first.
-  dash.draw('cmMissed', (tb) => {
+  const missedTable = (name, pred, lineCol) => dash.draw(name, (tb) => {
     tb.replaceChildren();
-    const list = calls().filter((r) => r.DIR === 'in' && !r.ANSWERED).sort((a, b) => d3.descending(a.START, b.START));
+    const list = calls().filter((r) => r.DIR === 'in' && !r.ANSWERED && pred(r)).sort((a, b) => d3.descending(a.START, b.START));
     if (!list.length) { const tr = document.createElement('tr'); td(tr, 'No unanswered calls in this period.'); tb.appendChild(tr); return; }
     list.forEach((r) => {
       const tr = document.createElement('tr');
       const done = r.CALLBACK_MIN !== null || r.CALLED_AGAIN;
       if (!done) tr.className = 'mp-attn';
-      td(tr, when(r.START) + (isBiz(r.START) ? '' : ' · after hours')); td(tr, r.LINE || 'Direct line'); td(tr, r.STAFF && !/^Motion PMG\b/.test(r.STAFF) ? r.STAFF : '—');
+      td(tr, when(r.START) + (isBiz(r.START) ? '' : ' · after hours')); if (lineCol) td(tr, r.LINE ? r.LINE.replace(/^Motion PMG - /, '') + ' queue' : 'Direct line'); td(tr, r.STAFF && !/^Motion PMG\b/.test(r.STAFF) ? r.STAFF : '—');
       const c = td(tr, '');
       const pill = document.createElement('span');
       pill.className = 'mp-pill ' + (done ? 'mp-ok' : 'mp-bad');
@@ -101,6 +113,8 @@
       tb.appendChild(tr);
     });
   });
+  missedTable('cmMainMissed', isMain, false);
+  missedTable('cmMissed', (r) => !isMain(r), true);
 
   // Owner/tenant emails with no reply found in Outlook or AppFolio, longest wait first.
   dash.draw('cmMailWait', (tb) => {
@@ -121,17 +135,20 @@
     const c = rowsOf('comm_calls') || [], m = rowsOf('resp_email') || [];
     const wk = d3.timeMonday;
     const W = new Map();
-    const w = (s) => { const k = +wk.floor(new Date(s)); if (!W.has(k)) W.set(k, { k, inN: 0, ans: 0, miss: 0, notBack: 0, wait: [], out: 0, mail: 0, repH: [] }); return W.get(k); };
+    const w = (s) => { const k = +wk.floor(new Date(s)); if (!W.has(k)) W.set(k, { k, mIn: 0, mAns: 0, mMiss: 0, mNotBack: 0, inN: 0, ans: 0, miss: 0, notBack: 0, wait: [], out: 0, mail: 0, repH: [] }); return W.get(k); };
     c.forEach((r) => {
       const x = w(r.START);
-      if (r.DIR === 'in') { x.inN++; if (r.ANSWERED) { x.ans++; if (r.LINE && r.WAIT_S !== null) x.wait.push(+r.WAIT_S); } else { x.miss++; if (r.CALLBACK_MIN === null && !r.CALLED_AGAIN) x.notBack++; } }
+      const nb = r.CALLBACK_MIN === null && !r.CALLED_AGAIN;
+      if (r.DIR === 'in' && isMain(r)) { x.mIn++; if (r.ANSWERED) { x.mAns++; if (r.WAIT_S !== null) x.wait.push(+r.WAIT_S); } else { x.mMiss++; if (nb) x.mNotBack++; } }
+      else if (r.DIR === 'in') { x.inN++; if (r.ANSWERED) x.ans++; else { x.miss++; if (nb) x.notBack++; } }
       else x.out++;
     });
     m.map(norm).forEach((r) => { const x = w(r.RECEIVED); x.mail++; if (r._rep) x.repH.push(r._bh); });
     Array.from(W.values()).sort((a, b) => b.k - a.k).slice(0, 8).forEach((x) => {
       const tr = document.createElement('tr');
       td(tr, 'Week of ' + d3.timeFormat('%b %-d')(new Date(x.k)));
-      td(tr, x.inN, 'mp-num'); td(tr, pct(x.ans, x.inN), 'mp-num'); td(tr, fmtSec(med(x.wait)), 'mp-num'); td(tr, x.miss, 'mp-num'); td(tr, x.notBack, 'mp-num');
+      td(tr, x.mIn, 'mp-num'); td(tr, pct(x.mAns, x.mIn), 'mp-num'); td(tr, fmtSec(med(x.wait)), 'mp-num'); td(tr, x.mNotBack, 'mp-num');
+      td(tr, x.inN, 'mp-num'); td(tr, pct(x.ans, x.inN), 'mp-num'); td(tr, x.notBack, 'mp-num');
       td(tr, x.out, 'mp-num'); td(tr, x.mail, 'mp-num'); td(tr, fmtHr(med(x.repH)), 'mp-num');
       tb.appendChild(tr);
     });
@@ -146,6 +163,6 @@
   document.querySelectorAll('[data-cmdays]').forEach((b) => b.addEventListener('click', () => {
     view.days = +b.getAttribute('data-cmdays');
     document.querySelectorAll('[data-cmdays]').forEach((x) => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
-    ['cmIn', 'cmInN', 'cmMiss', 'cmMissN', 'cmWait', 'cmOut', 'cmOutN', 'cmMail', 'cmMailN', 'cmPeople', 'cmMissed', 'cmMailWait'].forEach((n) => dash.draw(n));
+    ['cmMainIn', 'cmMainInN', 'cmMainMiss', 'cmMainMissN', 'cmMainBack', 'cmMainBackN', 'cmMainMissed', 'cmIn', 'cmInN', 'cmMiss', 'cmMissN', 'cmWait', 'cmOut', 'cmOutN', 'cmMail', 'cmMailN', 'cmPeople', 'cmMissed', 'cmMailWait'].forEach((n) => dash.draw(n));
   }));
 })();

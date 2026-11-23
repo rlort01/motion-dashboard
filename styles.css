@@ -180,3 +180,4 @@ body.mp-noscroll { overflow: hidden; }
 .mp-exsparks { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 10px; }
 .mp-exspark svg { display: block; }
 .mp-exspark text { fill: var(--color-fg-muted); font-size: 10px; }
+.mp-bar [hidden], .mp-bar[hidden] { display: none !important; }

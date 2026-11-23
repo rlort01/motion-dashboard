@@ -7,7 +7,7 @@
 <title>Motion Dashboard</title>
 <link rel="icon" href="rings.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Source+Sans+3:wght@400;600&display=swap">
-<link rel="stylesheet" href="styles.css?v=202611231921">
+<link rel="stylesheet" href="styles.css?v=202611231928">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -49,13 +49,14 @@
   <div class="mp-reviews" data-source="reviews" data-draw="reviews" aria-label="Google review ratings"></div>
 
   <div class="mp-bar" id="filters">
-    <label>Market
+    <label id="fltMarket">Market
       <select class="dash-select" data-draw="marketSel" aria-label="Market"></select>
     </label>
-    <label>Month
+    <label id="fltMonth">Month
       <select class="dash-select" data-draw="yearSel" aria-label="Year" data-source="sc2026"></select>
       <select class="dash-select" data-draw="monthSel" aria-label="Month or full year" data-source="sc2026"></select>
     </label>
+    <span class="mp-note" id="fltNone" hidden>This tab covers all markets.</span>
   </div>
 
   <div class="mp-tabs" role="tablist" id="tabs">
@@ -498,30 +499,47 @@
       <button class="mp-chip" data-cmdays="7" aria-pressed="true">Last 7 days</button>
       <button class="mp-chip" data-cmdays="30" aria-pressed="false">Last 30 days</button>
     </div>
+    <h2 class="mp-h2">Main line (8445)</h2>
+    <p class="mp-note">Calls to the company's main number, which rings the "Motion PMG - Georgia" call queue. This is the line that matters most to answer.</p>
+    <div class="mp-grid" style="margin: var(--cds-gap-sm) 0 var(--cds-gap-md)">
+      <div class="mp-card"><h3>Calls in</h3><div class="mp-big" data-source="comm_calls" data-draw="cmMainIn">—</div><div class="mp-meta" data-draw="cmMainInN">—</div></div>
+      <div class="mp-card"><h3>Unanswered</h3><div class="mp-big" data-source="comm_calls" data-draw="cmMainMiss">—</div><div class="mp-meta" data-draw="cmMainMissN">—</div></div>
+      <div class="mp-card"><h3>Never called back</h3><div class="mp-big" data-source="comm_calls" data-draw="cmMainBack">—</div><div class="mp-meta" data-draw="cmMainBackN">—</div></div>
+      <div class="mp-card"><h3>Wait to reach a person</h3><div class="mp-big" data-source="comm_calls" data-draw="cmWait">—</div><div class="mp-meta">From the call coming in to someone picking up (typical)</div></div>
+    </div>
+    <h3 class="mp-h3">Unanswered main-line calls</h3>
+    <p class="mp-note">Newest first. Red means no one called that number back and the caller didn't get through on a later call within 3 days.</p>
+    <div class="mp-wrap mp-scroll">
+      <table class="mp-table" data-source="comm_calls">
+        <thead><tr><th>When</th><th>Rang</th><th>Follow-up</th></tr></thead>
+        <tbody data-draw="cmMainMissed"></tbody>
+      </table>
+    </div>
+    <h2 class="mp-h2">Everyone else</h2>
+    <p class="mp-note">Calls to team members' direct numbers and the Tennessee queue, calls the team made, and owner/tenant email. Calls between staff aren't counted.</p>
     <div class="mp-grid" style="margin: var(--cds-gap-sm) 0 var(--cds-gap-md)">
       <div class="mp-card"><h3>Incoming calls</h3><div class="mp-big" data-source="comm_calls" data-draw="cmIn">—</div><div class="mp-meta" data-draw="cmInN">—</div></div>
       <div class="mp-card"><h3>Unanswered calls</h3><div class="mp-big" data-source="comm_calls" data-draw="cmMiss">—</div><div class="mp-meta" data-draw="cmMissN">—</div></div>
-      <div class="mp-card"><h3>Main-line wait to reach a person</h3><div class="mp-big" data-source="comm_calls" data-draw="cmWait">—</div><div class="mp-meta">From the call coming in to someone picking up (typical)</div></div>
       <div class="mp-card"><h3>Outgoing calls</h3><div class="mp-big" data-source="comm_calls" data-draw="cmOut">—</div><div class="mp-meta" data-draw="cmOutN">—</div></div>
       <div class="mp-card"><h3>Email first reply</h3><div class="mp-big" data-source="resp_email" data-draw="cmMail">—</div><div class="mp-meta" data-draw="cmMailN">—</div></div>
     </div>
-    <h2 class="mp-h2">By person</h2>
-    <p class="mp-note">Answered: outside calls they picked up (main line or direct). Missed: calls to their direct number nobody picked up. Callbacks: unanswered calls they returned within 3 days, and how long it took. Email replies count from Outlook (same thread) or AppFolio (email, text or chat to that person), whichever came first, in business hours (Mon–Fri, 8 AM–6 PM Eastern).</p>
+    <h3 class="mp-h3">By person</h3>
+    <p class="mp-note">Main line and other answered: outside calls they picked up on the main line or elsewhere. Missed: calls to their direct number nobody picked up. Callbacks: unanswered calls they returned within 3 days, and how long it took. Email replies count from Outlook (same thread) or AppFolio (email, text or chat to that person), whichever came first, in business hours (Mon–Fri, 8 AM–6 PM Eastern).</p>
     <div class="mp-wrap mp-scroll">
       <table class="mp-table" data-source="comm_calls">
-        <thead><tr><th>Team member</th><th class="mp-num">Calls answered</th><th class="mp-num">Missed (direct)</th><th class="mp-num">Calls made</th><th class="mp-num">Phone hours</th><th class="mp-num">Callbacks · typical time</th><th class="mp-num">Owner/tenant emails in</th><th class="mp-num">Emails replied · typical time</th></tr></thead>
+        <thead><tr><th>Team member</th><th class="mp-num">Main line answered</th><th class="mp-num">Other calls answered</th><th class="mp-num">Missed (direct)</th><th class="mp-num">Calls made</th><th class="mp-num">Phone hours</th><th class="mp-num">Callbacks · typical time</th><th class="mp-num">Owner/tenant emails in</th><th class="mp-num">Emails replied · typical time</th></tr></thead>
         <tbody data-draw="cmPeople"></tbody>
       </table>
     </div>
-    <h2 class="mp-h2">Unanswered calls</h2>
-    <p class="mp-note">Outside calls nobody picked up (under 10 seconds with a person), newest first. Red means no one called that number back and the caller didn't get through on a later call within 3 days.</p>
+    <h3 class="mp-h3">Other unanswered calls</h3>
+    <p class="mp-note">Direct-number and Tennessee-queue calls nobody picked up (under 10 seconds with a person), newest first. Red means no one called that number back and the caller didn't get through on a later call within 3 days.</p>
     <div class="mp-wrap mp-scroll">
       <table class="mp-table" data-source="comm_calls">
         <thead><tr><th>When</th><th>Line</th><th>Rang</th><th>Follow-up</th></tr></thead>
         <tbody data-draw="cmMissed"></tbody>
       </table>
     </div>
-    <h2 class="mp-h2">Owner and tenant emails still waiting</h2>
+    <h3 class="mp-h3">Owner and tenant emails still waiting</h3>
     <p class="mp-note">No reply found in Outlook or AppFolio. AppFolio is checked each night; red means more than one business day (10 hours). Some may be "thanks" notes that don't need an answer.</p>
     <div class="mp-wrap mp-scroll">
       <table class="mp-table" data-source="resp_email">
@@ -532,7 +550,7 @@
     <h2 class="mp-h2">Week by week</h2>
     <div class="mp-wrap">
       <table class="mp-table" data-source="comm_calls">
-        <thead><tr><th>Week</th><th class="mp-num">Calls in</th><th class="mp-num">Answered</th><th class="mp-num">Main-line wait</th><th class="mp-num">Unanswered</th><th class="mp-num">Not called back</th><th class="mp-num">Calls made</th><th class="mp-num">Owner/tenant emails</th><th class="mp-num">Typical email reply</th></tr></thead>
+        <thead><tr><th>Week</th><th class="mp-num">Main line in</th><th class="mp-num">Answered</th><th class="mp-num">Wait</th><th class="mp-num">Not called back</th><th class="mp-num">Other calls in</th><th class="mp-num">Answered</th><th class="mp-num">Not called back</th><th class="mp-num">Calls made</th><th class="mp-num">Owner/tenant emails</th><th class="mp-num">Typical email reply</th></tr></thead>
         <tbody data-draw="cmWeeks"></tbody>
       </table>
     </div>
@@ -777,20 +795,20 @@
 </div>
 
 </div>
-<script src="dash.js?v=202611231921"></script>
-<script src="sc.js?v=202611231921"></script>
-<script src="app.js?v=202611231921"></script>
-<script src="ramp.js?v=202611231921"></script>
-<script src="companies.js?v=202611231921"></script>
-<script src="owners.js?v=202611231921"></script>
-<script src="reviews.js?v=202611231921"></script>
-<script src="portfolio.js?v=202611231921"></script>
-<script src="exec.js?v=202611231921"></script>
-<script src="goals.js?v=202611231921"></script>
-<script src="weather.js?v=202611231921"></script>
-  <script src="map.js?v=202611231921"></script>
-<script src="comms.js?v=202611231921"></script>
-<script src="entry.js?v=202611231921"></script>
-<script src="main.js?v=202611231921"></script>
+<script src="dash.js?v=202611231928"></script>
+<script src="sc.js?v=202611231928"></script>
+<script src="app.js?v=202611231928"></script>
+<script src="ramp.js?v=202611231928"></script>
+<script src="companies.js?v=202611231928"></script>
+<script src="owners.js?v=202611231928"></script>
+<script src="reviews.js?v=202611231928"></script>
+<script src="portfolio.js?v=202611231928"></script>
+<script src="exec.js?v=202611231928"></script>
+<script src="goals.js?v=202611231928"></script>
+<script src="weather.js?v=202611231928"></script>
+  <script src="map.js?v=202611231928"></script>
+<script src="comms.js?v=202611231928"></script>
+<script src="entry.js?v=202611231928"></script>
+<script src="main.js?v=202611231928"></script>
 </body>
 </html>
